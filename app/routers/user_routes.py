@@ -1,15 +1,11 @@
-from fastapi import APIRouter
-from .models import LoginSchema, UserSchema, SignupSchema, UpdateYearGroupSchema
-from ..user_account.user_auth import create_user, login_user, delete_user_account, get_user_data, update_user_year_group
+from fastapi import APIRouter, UploadFile, File, Form
+from .models import LoginSchema, UserSchema, SignupSchema, UpdateYearGroupSchema, DeleteUserWorkingFileSchema, UpdateClassContextSchema
+from ..user_account.user_auth import create_user, login_user, delete_user_account, get_user_data, update_user_year_group, update_user_class_context, get_username_from_jwt_token
+from ..data_storage.s3_functionality import upload_user_working_file, delete_user_working_file, get_user_working_files
 
 router = APIRouter()
 
-@router.get("/account")
-async def read_users():
-    pass
-
-
-@router.post("/login")
+@router.post('/login')
 async def login(data: LoginSchema):
     '''
     Route for users logging into their accounts
@@ -21,10 +17,10 @@ async def login(data: LoginSchema):
 
     status, message, jwt_token = await login_user(username, password)
 
-    return {"message": message, "status": status, "jwt_token" : jwt_token}
+    return {'message': message, 'status': status, 'jwt_token' : jwt_token}
 
 
-@router.post("/signup")
+@router.post('/signup')
 async def signup(data: SignupSchema):
     '''
     route for users creating new accounts
@@ -36,10 +32,10 @@ async def signup(data: SignupSchema):
 
     status, message = await create_user(username, password)
 
-    return {"message": message, "status": status}
+    return {'message': message, 'status': status}
     
 
-@router.post("/delete_account")
+@router.post('/delete_account')
 async def delete_account(data: UserSchema):
     '''
     route for users deleting their accounts
@@ -50,10 +46,10 @@ async def delete_account(data: UserSchema):
 
     status, message = await delete_user_account(jwt_token)
 
-    return {"message": message, "status": status}
+    return {'message': message, 'status': status}
 
 
-@router.post("/get_user_info")
+@router.post('/get_user_info')
 async def get_user_info(data: UserSchema):
     '''
     route for getting user info from jwt token
@@ -63,10 +59,10 @@ async def get_user_info(data: UserSchema):
 
     status, message, user_data = await get_user_data(jwt_token)
 
-    return {"status": status, "message": message, "user_data": user_data}
+    return {'status': status, 'message': message, 'user_data': user_data}
 
 
-@router.post("/update_year_group")
+@router.post('/update_year_group')
 async def update_year_group(data: UpdateYearGroupSchema):
     '''
     route for updating user's year group
@@ -77,4 +73,75 @@ async def update_year_group(data: UpdateYearGroupSchema):
 
     status, message = await update_user_year_group(jwt_token, year_group)
 
-    return {"status": status, "message": message}
+    return {'status': status, 'message': message}
+
+
+@router.post('/update_class_context')
+async def update_class_context(data: UpdateClassContextSchema):
+    '''
+    route for updating user's class context
+    '''
+
+    jwt_token = data.jwt_token
+    class_context = data.class_context
+
+    status, message = await update_user_class_context(jwt_token, class_context)
+
+    return {'status': status, 'message': message}
+
+
+
+from fastapi import APIRouter, UploadFile, File, Form
+
+@router.post('/upload_working_file')
+async def upload_working_file( jwt_token: str = Form(...), file: UploadFile = File(...)):
+    file_content = await file.read()
+    filename = file.filename
+
+    username = await get_username_from_jwt_token(jwt_token)
+    
+    if username:
+        status, message = await upload_user_working_file(username, filename, file_content)
+
+    else:
+        status = 400
+        message = 'Invalid user JWT token'
+
+    return {'status': status, 'message': message}
+
+
+@router.post('/delete_working_file')
+async def upload_working_file( data: DeleteUserWorkingFileSchema ):
+    
+    filename = data.filename
+    jwt_token = data.jwt_token
+
+    username = await get_username_from_jwt_token(jwt_token)
+    
+    if username:
+        status, message = await delete_user_working_file(username, filename)
+
+    else:
+        status = 400
+        message = 'Invalid user JWT token'
+
+    return {'status': status, 'message': message}
+
+
+@router.post('/get_working_files')
+async def get_working_files(data: UserSchema):
+    jwt_token = data.jwt_token
+
+    username = await get_username_from_jwt_token(jwt_token)
+    
+    if username:
+        status, message, working_files = await get_user_working_files(username)
+
+    else:
+        status = 400
+        message = 'Invalid user JWT token'
+        working_files = []
+
+    return {'status': status, 'message': message, 'working_files': working_files}
+
+

@@ -21,7 +21,7 @@ async def login_user(username, password):
             user = session.query(User).filter(User.username == username).first()
 
             if not user:
-                return 400, "User does not exist", None
+                return 400, 'User does not exist', None
             
             password_bytes = password.encode('utf-8')
 
@@ -30,13 +30,13 @@ async def login_user(username, password):
             matched_password = bcrypt.checkpw(password_bytes, check_password_bytes)
 
             if matched_password:
-                jwt_access_token = create_jwt_access_token(data={"sub": username})
-                return 200, "User logged in successfully", jwt_access_token
+                jwt_access_token = create_jwt_access_token(data={'sub': username})
+                return 200, 'User logged in successfully', jwt_access_token
             
-            return 400, "Invalid password", None
+            return 400, 'Invalid password', None
     
     except:
-        return 400, "Error logging in user", None
+        return 400, 'Error logging in user', None
         
 
 
@@ -61,18 +61,18 @@ async def create_user(username, password):
             existing_user = session.query(User).filter(User.username == username).first()
 
             if existing_user:
-                return 400, "Username already exists"
+                return 400, 'Username already exists'
 
             try:
                 session.add(new_user)
                 session.commit()
-                return 200, "User created successfully" 
+                return 200, 'User created successfully' 
             
             except:
-                return 400, "User creation failed"
+                return 400, 'User creation failed'
             
     except:
-        return 400, "Error creating user"
+        return 400, 'Error creating user'
 
 
 async def delete_user_account(jwt_token):
@@ -81,33 +81,33 @@ async def delete_user_account(jwt_token):
     '''
 
     try:   
-        secret_key = os.getenv("JWT_SECRET_KEY")
-        algorithm = os.getenv("JWT_ALGORITHM")
+        secret_key = os.getenv('JWT_SECRET_KEY')
+        algorithm = os.getenv('JWT_ALGORITHM')
 
         decoded_jwt = jwt.decode(jwt_token, secret_key, algorithms=[algorithm])
 
-        username = decoded_jwt.get("sub")
+        username = decoded_jwt.get('sub')
 
         if username is None:
-            return 400, "Invalid token"
+            return 400, 'Invalid token'
     
 
         with Session(engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if user is None:
-                return 400, "User does not exist"
+                return 400, 'User does not exist'
 
             if user:
                 session.delete(user)
                 session.commit()
-                return 200, "User deleted successfully"
+                return 200, 'User deleted successfully'
             
             else:
-                return 400, "User deletion failed"
+                return 400, 'User deletion failed'
     
     except:
-        return 400, "Error deleting user"
+        return 400, 'Error deleting user'
 
 
 
@@ -118,34 +118,34 @@ async def get_user_data(jwt_token):
 
     try:
 
-        secret_key = os.getenv("JWT_SECRET_KEY")
-        algorithm = os.getenv("JWT_ALGORITHM")
+        secret_key = os.getenv('JWT_SECRET_KEY')
+        algorithm = os.getenv('JWT_ALGORITHM')
 
         decoded_jwt = jwt.decode(jwt_token, secret_key, algorithms=[algorithm])
 
-        username = decoded_jwt.get("sub")
+        username = decoded_jwt.get('sub')
 
         if username is None:
-            return 400, "Invalid token", None
+            return 400, 'Invalid token', None
         
         with Session(engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if user is None:
-                return 400, "User does not exist", None
+                return 400, 'User does not exist', None
 
             if user:
                 
-                user_data = {"username": user.username, "year_group": user.year_group}
+                user_data = {'username': user.username, 'year_group': user.year_group, 'class_context': user.class_context}
 
-                return 200, "User info retrieved successfully", user_data
+                return 200, 'User info retrieved successfully', user_data
             
             else:
-                return 400, "User info retrieval failed", None
+                return 400, 'User info retrieval failed', None
     
     except:
 
-        return 400, "Error retrieving user info", None
+        return 400, 'Error retrieving user info', None
 
 
 def create_jwt_access_token(data):
@@ -154,8 +154,8 @@ def create_jwt_access_token(data):
     '''
     to_encode = data.copy()
 
-    secret_key = os.getenv("JWT_SECRET_KEY")
-    algorithm = os.getenv("JWT_ALGORITHM")
+    secret_key = os.getenv('JWT_SECRET_KEY')
+    algorithm = os.getenv('JWT_ALGORITHM')
     
     encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=algorithm)
     return encoded_jwt
@@ -164,24 +164,91 @@ def create_jwt_access_token(data):
 async def update_user_year_group(jwt_token, year_group):
 
     try:
-        secret_key = os.getenv("JWT_SECRET_KEY")
-        algorithm = os.getenv("JWT_ALGORITHM")
+        secret_key = os.getenv('JWT_SECRET_KEY')
+        algorithm = os.getenv('JWT_ALGORITHM')
 
         decoded_jwt = jwt.decode(jwt_token, secret_key, algorithms=[algorithm])
 
-        username = decoded_jwt.get("sub")
+        username = decoded_jwt.get('sub')
 
         if username is None:
-            return 400, "Invalid token"
+            return 400, 'Invalid token'
+        
+        if not isinstance(year_group, int):
+            return 400, 'Year group must be an integer (whole number)'
+
+        if int(year_group) <= 0 or int(year_group) > 6:
+            return 400, 'Year group must be between 1 and 6'
         
         with Session(engine) as session:
             user = session.query(User).filter(User.username == username).first()
             if user is None:
-                return 400, "User does not exist"
+                return 400, 'User does not exist'
             user.year_group = year_group
             session.commit()
-            return 200, "Year group updated successfully"
+            return 200, 'Year group updated successfully'
     
     except:
-        return 400, "Error updating year group"
+        return 400, 'Error updating year group'
+    
+
+
+
+async def update_user_class_context(jwt_token, class_context):
+
+    try:
+        secret_key = os.getenv('JWT_SECRET_KEY')
+        algorithm = os.getenv('JWT_ALGORITHM')
+
+        decoded_jwt = jwt.decode(jwt_token, secret_key, algorithms=[algorithm])
+
+        username = decoded_jwt.get('sub')
+
+        if username is None:
+            return 400, 'Invalid token'
+
         
+        with Session(engine) as session:
+            user = session.query(User).filter(User.username == username).first()
+            if user is None:
+                return 400, 'User does not exist'
+            user.class_context = class_context
+            session.commit()
+            return 200, 'Class context updated successfully'
+    
+    except:
+        return 400, 'Error updating year group'
+        
+
+
+async def get_username_from_jwt_token(jwt_token):
+    '''
+    deletes user from postgresql database using jwt token for authentication.
+    '''
+
+    try:   
+        secret_key = os.getenv('JWT_SECRET_KEY')
+        algorithm = os.getenv('JWT_ALGORITHM')
+
+        decoded_jwt = jwt.decode(jwt_token, secret_key, algorithms=[algorithm])
+
+        username = decoded_jwt.get('sub')
+
+        if username is None:
+            return None
+    
+
+        with Session(engine) as session:
+            user = session.query(User).filter(User.username == username).first()
+
+            if user is None:
+                return None
+
+            if user:
+                return user.username
+            
+            else:
+                return None
+    
+    except:
+        return None

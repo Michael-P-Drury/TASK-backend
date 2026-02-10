@@ -5,7 +5,7 @@ import os
 
 load_dotenv()
 
-engine = create_engine(os.getenv( "POSTGRESQL_URL" ))
+engine = create_engine(os.getenv( 'POSTGRESQL_URL' ))
 
 # Create an inspector object
 inspector = inspect(engine)
@@ -13,4 +13,4 @@ inspector = inspect(engine)
 # Get list of table names
 existing_tables = inspector.get_table_names()
 
-print(f"Tables in database: {existing_tables}")
+print(f'Tables in database: {existing_tables}')

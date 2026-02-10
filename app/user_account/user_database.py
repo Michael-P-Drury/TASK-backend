@@ -14,7 +14,7 @@ from sqlalchemy.orm import declarative_base
 load_dotenv()
     
 # connection to PostgreSQL database to be imported when used
-DATABASE_URL = os.getenv("POSTGRESQL_URL")
+DATABASE_URL = os.getenv('POSTGRESQL_URL')
 engine = create_engine(DATABASE_URL)
 
 Base = declarative_base()
@@ -25,4 +25,6 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     year_group = Column(Integer, nullable=True)
+    class_context = Column(String, nullable=True)
+    chat_history = Column(String, nullable=True)
 
