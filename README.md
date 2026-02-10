@@ -1,9 +1,9 @@
 ## TASK-backend
 
-T - teacher
-A - assistant
-S - success
-K - key
+T - Teacher
+A - Assistant
+S - Side
+K - Kick
 
 # to run
 
