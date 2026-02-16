@@ -2,14 +2,14 @@
 
 async def get_tool_description():
     
-    tool_description = 'A main tool used to create lesson plans'
+    tool_description = 'create lesson plans'
 
     return tool_description
 
 
 async def get_tool_requirements():
 
-    tool_requirements = 'Teacher must submit a topic (e.g. fractions, vocanos)'
+    tool_requirements = '1. Topic must be present in chat history: A specific topic for the exercise sheet.'
 
     return tool_requirements
 

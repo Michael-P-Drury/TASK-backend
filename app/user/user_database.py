@@ -26,5 +26,7 @@ class User(Base):
     password = Column(String, nullable=False)
     year_group = Column(Integer, nullable=True)
     class_context = Column(String, nullable=True)
-    chat_history = Column(String, nullable=True)
+    condensed_chat_history = Column(String, nullable=True)
+    full_chat_history = Column(String, nullable=True)
+    
 

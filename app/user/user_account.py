@@ -2,7 +2,6 @@ import bcrypt
 from sqlalchemy.orm import Session
 from .user_database import engine, User
 import jwt
-from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 
@@ -21,7 +20,7 @@ async def login_user(username, password):
             user = session.query(User).filter(User.username == username).first()
 
             if not user:
-                return 400, 'User does not exist', None
+                return {'status': 400, 'message': 'User does not exist', 'jwt_token': None}
             
             password_bytes = password.encode('utf-8')
 
@@ -31,12 +30,12 @@ async def login_user(username, password):
 
             if matched_password:
                 jwt_access_token = create_jwt_access_token(data={'sub': username})
-                return 200, 'User logged in successfully', jwt_access_token
+                return {'status': 200, 'message': 'User logged in successfully', 'jwt_token': jwt_access_token}
             
-            return 400, 'Invalid password', None
+            return {'status': 400, 'message': 'Invalid password', 'jwt_token': None}
     
     except:
-        return 400, 'Error logging in user', None
+        return {'status': 400, 'message': 'Error logging in user', 'jwt_token': None}
         
 
 
@@ -61,18 +60,19 @@ async def create_user(username, password):
             existing_user = session.query(User).filter(User.username == username).first()
 
             if existing_user:
-                return 400, 'Username already exists'
+                return {'status': 400, 'message': 'Username already exists'}
 
             try:
                 session.add(new_user)
                 session.commit()
-                return 200, 'User created successfully' 
+                return {'status': 200, 'message': 'User created successfully'}
             
             except:
-                return 400, 'User creation failed'
+                return {'status': 400, 'message': 'Error creating user'}
             
     except:
-        return 400, 'Error creating user'
+        return {'status': 400, 'message': 'Error creating user'}
+
 
 
 async def delete_user_account(jwt_token):
@@ -89,25 +89,25 @@ async def delete_user_account(jwt_token):
         username = decoded_jwt.get('sub')
 
         if username is None:
-            return 400, 'Invalid token'
+            return {'status': 400, 'message': 'Invalid token'}
     
 
         with Session(engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if user is None:
-                return 400, 'User does not exist'
+                return {'status': 400, 'message': 'User does not exist'}
 
             if user:
                 session.delete(user)
                 session.commit()
-                return 200, 'User deleted successfully'
+                return {'status': 200, 'message': 'User deleted successfully'}
             
             else:
-                return 400, 'User deletion failed'
+                return {'status': 400, 'message': 'Error deleting user'}
     
     except:
-        return 400, 'Error deleting user'
+        return {'status': 400, 'message': 'Error deleting user'}
 
 
 
@@ -126,26 +126,26 @@ async def get_user_data(jwt_token):
         username = decoded_jwt.get('sub')
 
         if username is None:
-            return 400, 'Invalid token', None
+            return {'status': 400, 'message': 'Invalid jwt token', 'user_data': None}
         
         with Session(engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if user is None:
-                return 400, 'User does not exist', None
+                return {'status': 400, 'message': 'User does not exist', 'user_data': None}
 
             if user:
                 
                 user_data = {'username': user.username, 'year_group': user.year_group, 'class_context': user.class_context}
 
-                return 200, 'User info retrieved successfully', user_data
+                return {'status': 200, 'message': 'User data retreived successfully', 'user_data': user_data}
             
             else:
-                return 400, 'User info retrieval failed', None
+                return {'status': 400, 'message': 'User info retreival failed', 'user_data': None}
     
     except:
 
-        return 400, 'Error retrieving user info', None
+        return {'status': 400, 'message': 'Error retreiving user info', 'user_data': None}
 
 
 def create_jwt_access_token(data):
@@ -172,24 +172,25 @@ async def update_user_year_group(jwt_token, year_group):
         username = decoded_jwt.get('sub')
 
         if username is None:
-            return 400, 'Invalid token'
+            return {'status': 400, 'message': 'Invalid JWT token'}
         
         if not isinstance(year_group, int):
-            return 400, 'Year group must be an integer (whole number)'
+            return {'status': 400, 'message': 'Year group must be Integer (whole number)'}
 
         if int(year_group) <= 0 or int(year_group) > 6:
-            return 400, 'Year group must be between 1 and 6'
+            return {'status': 400, 'message': 'Year group must be between 1 and 6'}
         
         with Session(engine) as session:
             user = session.query(User).filter(User.username == username).first()
             if user is None:
-                return 400, 'User does not exist'
+                return {'status': 400, 'message': 'User does not exist'}
+            
             user.year_group = year_group
             session.commit()
-            return 200, 'Year group updated successfully'
+            return {'status': 200, 'message': 'year group updated successfully'}
     
     except:
-        return 400, 'Error updating year group'
+        return {'status': 400, 'message': 'Error updating year group'}
     
 
 
@@ -205,19 +206,19 @@ async def update_user_class_context(jwt_token, class_context):
         username = decoded_jwt.get('sub')
 
         if username is None:
-            return 400, 'Invalid token'
+            return {'status': 400, 'message': 'Error with JWT token'}
 
         
         with Session(engine) as session:
             user = session.query(User).filter(User.username == username).first()
             if user is None:
-                return 400, 'User does not exist'
+                return {'status': 400, 'message': 'User does not exist'}
             user.class_context = class_context
             session.commit()
-            return 200, 'Class context updated successfully'
+            return {'status': 200, 'message': 'Class context updated'}
     
     except:
-        return 400, 'Error updating year group'
+        return {'status': 400, 'message': 'Error updating class context'}
         
 
 
@@ -252,3 +253,62 @@ async def get_username_from_jwt_token(jwt_token):
     
     except:
         return None
+
+
+
+async def get_user_chat_history(username, full_history):
+    '''
+    returning a users chat history
+    '''
+    try:
+        with Session(engine) as session:
+            user = session.query(User).filter(User.username == username).first()
+            
+            if full_history:
+                chat_history = user.full_chat_history
+
+            else:
+                chat_history = user.condensed_chat_history
+
+            return {'status': 200, 'message': 'success getting chat history', 'chat_history': chat_history}
+    
+    except:
+        return {'status': 400, 'message': 'Error clearing chat history', 'chat_history': None}
+            
+    
+
+async def set_chat_history(username, chat_history, full_history):
+    '''
+    sets a users chat history
+    '''
+
+    with Session(engine) as session:
+        user = session.query(User).filter(User.username == username).first()
+
+        if full_history:
+            user.full_chat_history = chat_history
+
+        else:
+            user.condensed_chat_history = chat_history
+
+        session.commit()
+
+
+async def clear_user_chat(username):
+    '''
+    sets a users chat history
+    '''
+
+    try:
+
+        with Session(engine) as session:
+            user = session.query(User).filter(User.username == username).first()
+
+            user.full_chat_history = ''
+            user.condensed_chat_history = ''
+            session.commit()
+
+            return {'status': 200, 'message': 'Chat History Cleared'}
+        
+    except:
+        return {'status': 400, 'message': 'Error clearing History Cleared'}
