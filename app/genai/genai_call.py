@@ -1,12 +1,28 @@
 from ollama import AsyncClient
 import time
+from cerebras.cloud.sdk import AsyncCerebras
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 async def invoke_genai(prompt, provider, model_id, temperature):
+    '''
+    inputs:
+    prompt: str - sting for prompt to send to genai
+    provider: str - provider for LLM
+    model_id: str - model that you are trying to contact
+    temperature: floa - temperature for model (between 0 and 1)
+
+    for invoking genai models
+    '''
+
+    try:
     
-    if provider == 'ollama':
-        message = {'role': 'user', 'content': prompt}
-        
-        try:
+        if provider == 'ollama':
+            message = {'role': 'user', 'content': prompt}
+            
             start = time.time()
             response = await AsyncClient().chat(
                 model= model_id,
@@ -16,14 +32,32 @@ async def invoke_genai(prompt, provider, model_id, temperature):
                 }
             )
             end = time.time()
-
             time_taken = end - start
 
             response = response['message']['content']
-
-            return {'status': 200, 'response': response, 'time_taken': time_taken}
             
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        elif provider == 'cerebras':
+            start = time.time()
+            
+            client = AsyncCerebras(api_key=os.getenv('CEREBRAS_API_KEY'))
 
+            response = await client.chat.completions.create(
+                model=model_id,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature
+            )
+
+            response = response.choices[0].message.content
+
+            end = time.time()
+            time_taken = end - start
+
+        else:
             return {'status': 200, 'response': None, 'time_taken': None}
+
+        return {'status': 200, 'response': response, 'time_taken': time_taken}
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+        return {'status': 200, 'response': None, 'time_taken': None}

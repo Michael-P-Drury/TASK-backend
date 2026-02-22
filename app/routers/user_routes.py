@@ -1,7 +1,10 @@
 from fastapi import APIRouter, UploadFile, File, Form
-from .models import LoginSchema, UserSchema, SignupSchema, UpdateYearGroupSchema, DeleteUserWorkingFileSchema, UpdateClassContextSchema
+from .models import LoginSchema, UserSchema, SignupSchema, UpdateYearGroupSchema, DeleteUserFileSchema, UpdateClassContextSchema
 from ..user.user_account import create_user, login_user, delete_user_account, get_user_data, update_user_year_group, update_user_class_context, get_username_from_jwt_token
-from ..data_storage.s3_functionality import upload_user_working_file, delete_user_working_file, get_user_working_files
+from ..data_storage.s3_functionality import upload_user_working_file, delete_user_working_file, get_user_working_files, delete_user_output_file, get_user_output_files, download_user_output_file
+import io
+from fastapi.responses import StreamingResponse
+
 
 router = APIRouter()
 
@@ -104,9 +107,6 @@ async def update_class_context(data: UpdateClassContextSchema):
     return {'status': status, 'message': message}
 
 
-
-from fastapi import APIRouter, UploadFile, File, Form
-
 @router.post('/upload_working_file')
 async def upload_working_file( jwt_token: str = Form(...), file: UploadFile = File(...)):
     file_content = await file.read()
@@ -125,7 +125,7 @@ async def upload_working_file( jwt_token: str = Form(...), file: UploadFile = Fi
 
 
 @router.post('/delete_working_file')
-async def upload_working_file( data: DeleteUserWorkingFileSchema ):
+async def upload_working_file( data: DeleteUserFileSchema ):
     
     filename = data.filename
     jwt_token = data.jwt_token
@@ -138,6 +138,52 @@ async def upload_working_file( data: DeleteUserWorkingFileSchema ):
     else:
         status = 400
         message = 'Invalid user JWT token'
+
+    return {'status': status, 'message': message}
+
+
+@router.post('/delete_output_file')
+async def upload_output_file( data: DeleteUserFileSchema ):
+    
+    filename = data.filename
+    jwt_token = data.jwt_token
+
+    username = await get_username_from_jwt_token(jwt_token)
+    
+    if username:
+        status, message = await delete_user_output_file(username, filename)
+
+    else:
+        status = 400
+        message = 'Invalid user JWT token'
+
+    return {'status': status, 'message': message}
+
+
+
+@router.post('/download_output_file')
+async def download_output_file( data: DeleteUserFileSchema ):
+    
+    filename = data.filename
+    jwt_token = data.jwt_token
+
+    username = await get_username_from_jwt_token(jwt_token)
+    
+    if username:
+        status, message, file_content = await download_user_output_file(username, filename)
+
+        if status == 200:
+
+            return StreamingResponse(
+                io.BytesIO(file_content),
+                media_type="application/octet-stream",
+                headers={"Content-Disposition": f"attachment; filename={filename}"}
+            )
+
+    else:
+        status = 400
+        message = 'Invalid user JWT token'
+        file_content = None
 
     return {'status': status, 'message': message}
 
@@ -157,4 +203,22 @@ async def get_working_files(data: UserSchema):
         working_files = []
 
     return {'status': status, 'message': message, 'working_files': working_files}
+
+
+@router.post('/get_output_files')
+async def get_output_files(data: UserSchema):
+    jwt_token = data.jwt_token
+
+    username = await get_username_from_jwt_token(jwt_token)
+    
+    if username:
+        status, message, output_files = await get_user_output_files(username)
+
+    else:
+        status = 400
+        message = 'Invalid user JWT token'
+        output_files = []
+
+    return {'status': status, 'message': message, 'output_files': output_files}
+
 

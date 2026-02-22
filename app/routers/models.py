@@ -17,7 +17,7 @@ class UpdateYearGroupSchema(BaseModel):
     year_group: int
 
 
-class DeleteUserWorkingFileSchema(BaseModel):
+class DeleteUserFileSchema(BaseModel):
     jwt_token: str
     filename: str
 

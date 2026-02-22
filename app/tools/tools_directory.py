@@ -6,6 +6,7 @@ tools_dict = {
     'create_lesson_plan': 'main',
     'how_to_make_good_lesson_plan': 'support',
     'how_to_make_good_exercise_sheet': 'support',
+    'get_class_context': 'support',
     'check_lesson_plan_quality': 'quality',
     'check_exercise_sheet_quality': 'quality'
 }
@@ -29,3 +30,23 @@ async def get_tools_descriptions_text():
 
     return tools_descriptions_text
 
+
+async def create_support_tools_responses_text(support_tools_responses):
+    '''
+    inputs:
+    support_tools_responses: list[dict] - list of dictionary items for each support tool response
+    '''
+
+    response_output = []
+
+    for response_dict in support_tools_responses:
+        tool_id = response_dict['tool_id']
+        tool_response = response_dict['response']
+
+        response_output.append(f'{tool_id}:\n{tool_response}')
+
+    if response_output:
+
+        return '\n'.join(response_output)
+    
+    return ''
