@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from .models import ChatSchema, UserSchema
 from ..user.user_account import get_username_from_jwt_token, clear_user_chat, get_user_chat_history
-from ..controller_agent import run_chat
+from ..controller_agent import run_controller_agent
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ async def send_chat(data: ChatSchema):
     username = await get_username_from_jwt_token(jwt_token)
     
     if username:
-        response = await run_chat(username, user_prompt)
+        response = await run_controller_agent(username, user_prompt)
         status = response['status']
         message = response['message']
 

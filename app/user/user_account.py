@@ -110,6 +110,36 @@ async def delete_user_account(jwt_token):
         return {'status': 400, 'message': 'Error deleting user'}
 
 
+async def get_class_context_and_year(username):
+    '''
+    getting user class context and year group from username
+    '''
+
+    try:
+
+        if username is None:
+            return {'status': 400, 'message': 'Invalid username', 'user_data': None}
+        
+        with Session(engine) as session:
+            user = session.query(User).filter(User.username == username).first()
+
+            if user is None:
+                return {'status': 400, 'message': 'User does not exist', 'user_data': None}
+
+            if user:
+                
+                user_data = {'year_group': user.year_group, 'class_context': user.class_context}
+
+                return {'status': 200, 'message': 'User data retreived successfully', 'user_data': user_data}
+            
+            else:
+                return {'status': 400, 'message': 'User info retreival failed', 'user_data': None}
+    
+    except:
+
+        return {'status': 400, 'message': 'Error retreiving user info', 'user_data': None}
+
+
 
 async def get_user_data(jwt_token):
     '''
