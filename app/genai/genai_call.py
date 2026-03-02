@@ -1,3 +1,7 @@
+'''
+holds functionality for genai calling
+'''
+
 from ollama import AsyncClient
 import time
 from cerebras.cloud.sdk import AsyncCerebras
@@ -7,13 +11,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-async def invoke_genai(prompt, provider, model_id, temperature):
+async def invoke_genai(prompt: str, provider: str, model_id: str, temperature: float):
     '''
     inputs:
     prompt: str - sting for prompt to send to genai
     provider: str - provider for LLM
     model_id: str - model that you are trying to contact
-    temperature: floa - temperature for model (between 0 and 1)
+    temperature: float - temperature for model (between 0 and 1)
 
     for invoking genai models
     '''
