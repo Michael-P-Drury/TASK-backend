@@ -1,3 +1,7 @@
+'''
+holds pydantic models for the routes
+'''
+
 from pydantic import BaseModel
 
 class LoginSchema(BaseModel):
