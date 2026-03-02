@@ -1,3 +1,7 @@
+'''
+routes for user functionailty
+'''
+
 from fastapi import APIRouter, UploadFile, File, Form
 from .models import LoginSchema, UserSchema, SignupSchema, UpdateYearGroupSchema, DeleteUserFileSchema, UpdateClassContextSchema
 from ..user.user_account import create_user, login_user, delete_user_account, get_user_data, update_user_year_group, update_user_class_context, get_username_from_jwt_token
@@ -158,7 +162,6 @@ async def upload_output_file( data: DeleteUserFileSchema ):
         message = 'Invalid user JWT token'
 
     return {'status': status, 'message': message}
-
 
 
 @router.post('/download_output_file')
