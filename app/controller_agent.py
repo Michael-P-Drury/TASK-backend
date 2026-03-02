@@ -1,3 +1,8 @@
+'''
+Holds the controller agent functionality including run_controller_agent which acts as an entry for the controller agent and the proces flow functionality
+'''
+
+
 from .tools.tools_directory import get_tools_descriptions_text
 from .genai.genai_call import invoke_genai
 from .support_functionality import seperate_tools, add_chat_history, run_support_tools, run_main_tool
@@ -6,7 +11,7 @@ from .tools.tools_directory import create_support_tools_responses_text
 
 
 
-async def run_controller_agent(username, user_prompt):
+async def run_controller_agent(username: str, user_prompt: str):
     '''
     inputs:
     username: str - username for user chatting
@@ -75,11 +80,17 @@ async def run_controller_agent(username, user_prompt):
     return {'status': status, 'message': message}
 
 
-async def enough_info_decision(main_tool_id, chat_history):
+async def enough_info_decision(main_tool_id: str, chat_history: str):
     '''
-    Used to make decision on whether the agent has enough information yet to run tools.
+    inputs:
+    main_tool_id: str - the main tools id to test for
+    chat_history: str - the chat history to use for context to check for enough information
+
+    Used to make decision on whether the agent has enough information yet to run the main tool.
     '''
 
+
+    # getting requirement and description for main tool to put into prompt
     requirements_func = await get_tool_requirements_function(main_tool_id)
 
     description_func = await get_tool_description_function(main_tool_id)
@@ -119,6 +130,7 @@ async def enough_info_decision(main_tool_id, chat_history):
     ### FINAL DECISION
     '''
 
+    # run genai prompt and get response and tim taken ffrom invoke_genai function
     tool_decision_response = await invoke_genai(prompt, 'ollama', 'llama3.1', 0.05)
 
     text_response = tool_decision_response['response']
@@ -126,6 +138,7 @@ async def enough_info_decision(main_tool_id, chat_history):
 
     test_response = "".join(c for c in text_response if c.isalpha())
 
+    # creating a boolean response from genai response
     if test_response.lower().strip().startswith('true'):
 
         return {'response': text_response, 'time_taken': time_taken, 'decision_bool': True}
@@ -134,8 +147,14 @@ async def enough_info_decision(main_tool_id, chat_history):
 
 
 
-async def make_tool_decision(chat_history):
+async def make_tool_decision(chat_history: str):
+    '''
+    inputs:
 
+    chat_history: str - the chat history so that tool decisions can be made based on request
+    '''
+
+    # gets description of all of the tools in a formatted string for genai to decide against.
     tools_descriptions_string = await get_tools_descriptions_text()
         
     prompt = f'''
@@ -165,6 +184,7 @@ async def make_tool_decision(chat_history):
     OUTPUT:
     '''
 
+    # get entire genai response and return
     tool_decision_response = await invoke_genai(prompt, 'ollama', 'llama3.1', 0.05)
 
     return tool_decision_response
