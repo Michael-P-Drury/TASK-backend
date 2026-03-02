@@ -1,27 +1,37 @@
+'''
+Holds user account functionality
+'''
+
 import bcrypt
 from sqlalchemy.orm import Session
 from .user_database import engine, User
 import jwt
 from dotenv import load_dotenv
 import os
+from ..data_storage.s3_functionality import delete_user_s3_data
 
 load_dotenv()
 
-async def login_user(username, password):
+async def login_user(username: str, password: str):
     '''
+    inputs:
+    username: str - login attempt username
+    password: str - login attempt password
+
     Logs in users using username and password.
 
     connects to postgresql instance to check credentials using bcrypt.
     '''
 
     try:
-
+        # make a session with sqlalchemy
         with Session(engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if not user:
                 return {'status': 400, 'message': 'User does not exist', 'jwt_token': None}
-            
+                
+            # as passwords are encrypted, checks password bytes using bycrypt
             password_bytes = password.encode('utf-8')
 
             check_password_bytes = user.password.encode('utf-8')
@@ -39,8 +49,12 @@ async def login_user(username, password):
         
 
 
-async def create_user(username, password):
+async def create_user(username: str, password: str):
     '''
+    inputs:
+    username: str - create user username
+    password: str - create user password
+
     creates new user in progresql database using username and password.
     '''
 
@@ -56,7 +70,8 @@ async def create_user(username, password):
         new_user = User(username=username, password=hashed_password_str)
         
         with Session(engine) as session:
-
+            
+            # checks to see if user already exists
             existing_user = session.query(User).filter(User.username == username).first()
 
             if existing_user:
@@ -75,15 +90,20 @@ async def create_user(username, password):
 
 
 
-async def delete_user_account(jwt_token):
+async def delete_user_account(jwt_token: str):
     '''
+    inputs:
+    jwt_token: str - jwtr token for delete user (connected to users username)
+
     deletes user from postgresql database using jwt token for authentication.
     '''
 
-    try:   
+    try:
+        # gets jwt key and algorithm form .env file
         secret_key = os.getenv('JWT_SECRET_KEY')
         algorithm = os.getenv('JWT_ALGORITHM')
 
+        # decodes the inputted jwt token and gets the username
         decoded_jwt = jwt.decode(jwt_token, secret_key, algorithms=[algorithm])
 
         username = decoded_jwt.get('sub')
@@ -91,7 +111,7 @@ async def delete_user_account(jwt_token):
         if username is None:
             return {'status': 400, 'message': 'Invalid token'}
     
-
+        # creates sqlalchemy session and deletes account from table
         with Session(engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
@@ -101,6 +121,9 @@ async def delete_user_account(jwt_token):
             if user:
                 session.delete(user)
                 session.commit()
+                # also removes user's s3 files
+                await delete_user_s3_data(username)
+
                 return {'status': 200, 'message': 'User deleted successfully'}
             
             else:
@@ -110,8 +133,11 @@ async def delete_user_account(jwt_token):
         return {'status': 400, 'message': 'Error deleting user'}
 
 
-async def get_class_context_and_year(username):
+async def get_class_context_and_year(username: str):
     '''
+    inputs:
+    username: str - users username
+    
     getting user class context and year group from username
     '''
 
@@ -141,8 +167,11 @@ async def get_class_context_and_year(username):
 
 
 
-async def get_user_data(jwt_token):
+async def get_user_data(jwt_token: str):
     '''
+    inputs:
+    jwt_token: str - jwtr token for delete user (connected to users username)
+
     getting user info from jwt token
     '''
 
@@ -178,8 +207,11 @@ async def get_user_data(jwt_token):
         return {'status': 400, 'message': 'Error retreiving user info', 'user_data': None}
 
 
-def create_jwt_access_token(data):
+def create_jwt_access_token(data: str):
     '''
+    inputs:
+    data: str - the data that you want to create jwt token for
+
     creating jwt access token for user auth
     '''
     to_encode = data.copy()
@@ -191,7 +223,12 @@ def create_jwt_access_token(data):
     return encoded_jwt
 
 
-async def update_user_year_group(jwt_token, year_group):
+async def update_user_year_group(jwt_token: str, year_group: int):
+    '''
+    inputs:
+    jwt_token: str - jwt token linked to users username
+    year_group: int - new year group
+    '''
 
     try:
         secret_key = os.getenv('JWT_SECRET_KEY')
@@ -225,7 +262,12 @@ async def update_user_year_group(jwt_token, year_group):
 
 
 
-async def update_user_class_context(jwt_token, class_context):
+async def update_user_class_context(jwt_token: str, class_context: str):
+    '''
+    inputs:
+    jwt_token: str - jwt token linked to users username
+    class_context: int - new class context
+    '''
 
     try:
         secret_key = os.getenv('JWT_SECRET_KEY')
@@ -252,12 +294,16 @@ async def update_user_class_context(jwt_token, class_context):
         
 
 
-async def get_username_from_jwt_token(jwt_token):
+async def get_username_from_jwt_token(jwt_token: str):
     '''
+    inputs:
+    jwt_token: str - jwt token
+
     deletes user from postgresql database using jwt token for authentication.
     '''
 
-    try:   
+    try:  
+        # getting env variables for jwt tokens
         secret_key = os.getenv('JWT_SECRET_KEY')
         algorithm = os.getenv('JWT_ALGORITHM')
 
@@ -286,8 +332,12 @@ async def get_username_from_jwt_token(jwt_token):
 
 
 
-async def get_user_chat_history(username, full_history):
+async def get_user_chat_history(username: str, full_history: bool):
     '''
+    inputs:
+    username: str - users username
+    full_history: bool - true or false for full history return or not
+
     returning a users chat history
     '''
     try:
@@ -307,8 +357,14 @@ async def get_user_chat_history(username, full_history):
             
     
 
-async def set_chat_history(username, chat_history, full_history):
+async def set_chat_history(username: str, chat_history: str, full_history: bool):
     '''
+    inputs:
+    username: str - users username
+    chat_history: str - new chat history
+    full_history: bool - bool for if full chat history or not
+
+
     sets a users chat history
     '''
 
@@ -324,8 +380,11 @@ async def set_chat_history(username, chat_history, full_history):
         session.commit()
 
 
-async def clear_user_chat(username):
+async def clear_user_chat(username: str):
     '''
+    inputs:
+    username: str - users username
+
     sets a users chat history
     '''
 
