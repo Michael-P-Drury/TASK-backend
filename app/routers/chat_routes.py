@@ -1,3 +1,7 @@
+'''
+routes for chat
+'''
+
 from fastapi import APIRouter
 from .models import ChatSchema, UserSchema
 from ..user.user_account import get_username_from_jwt_token, clear_user_chat, get_user_chat_history
@@ -7,6 +11,9 @@ router = APIRouter()
 
 @router.post('/send_chat')
 async def send_chat(data: ChatSchema):
+    '''
+    route for sending a chat from frontend, running controller agent.
+    '''
     
     user_prompt = data.user_prompt
     jwt_token = data.jwt_token
@@ -27,6 +34,9 @@ async def send_chat(data: ChatSchema):
 
 @router.post('/get_condensed_chat_history')
 async def get_chat_history(data: UserSchema):
+    '''
+    returns condensed chat history to user
+    '''
     
     jwt_token = data.jwt_token
 
@@ -48,6 +58,9 @@ async def get_chat_history(data: UserSchema):
 
 @router.post('/get_full_chat_history')
 async def get_chat_history(data: UserSchema):
+    '''
+    returns full chat history to frontend
+    '''
     
     jwt_token = data.jwt_token
 
@@ -69,6 +82,9 @@ async def get_chat_history(data: UserSchema):
 
 @router.post('/clear_chat')
 async def clear_chat(data: UserSchema):
+    '''
+    route to remove chat history for user
+    '''
     
     jwt_token = data.jwt_token
 
