@@ -19,6 +19,7 @@ engine = create_engine(DATABASE_URL)
 
 Base = declarative_base()
 
+# user database structure to be used for SQLAlchemy throughout code
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
@@ -28,5 +29,5 @@ class User(Base):
     class_context = Column(String, nullable=True)
     condensed_chat_history = Column(String, nullable=True)
     full_chat_history = Column(String, nullable=True)
-    
+
 
