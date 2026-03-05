@@ -1,3 +1,5 @@
+from ..genai.genai_call import invoke_genai
+
 
 async def get_tool_description():
     '''
@@ -12,8 +14,35 @@ async def get_tool_description():
     return tool_description
 
 
-async def run_tool():
+async def run_tool(task_information, main_tool_response, support_tool_responses):
     
-    response = 'Hello :)'
+    prompt = f'''
+
+    You are a primary school exercise sheet quality check tool, your one job is to determine if an exercise sheet created is acceptable quality:
+
+    Here is an exercise sheet created by GenAI:
+
+    {main_tool_response}
+
+    Here was the chat context that it created the resource from:
+
+    {task_information}
+
+    The genai was given this support information to help it create its resource:
+
+    {support_tool_responses}
+
+    Your one task is to proof read the exercise sheet created and check if there is anything wrong or that you think NEEDS to be improved:
+
+    If you think that it is of acceptable quality, you must respond with:
+    FALSE|Improvements for needed improvements
+
+    If you think that the The quality of teh exercise sheet is acceptable you must reply with:
+    TRUE
+    '''
+
+    response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
+
+    response = response_dict['response']
     
     return {'tool_id': 'check_exercise_sheet_quality', 'response': response}

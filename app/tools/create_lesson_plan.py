@@ -29,7 +29,7 @@ async def get_tool_requirements():
     return tool_requirements
 
 
-async def run_tool(username, task_information, support_tool_responses_text):
+async def run_tool(username: str, task_information: str, support_tool_responses_text: str):
     '''
     function to run tool
 
@@ -52,15 +52,58 @@ async def run_tool(username, task_information, support_tool_responses_text):
     if support_tool_responses_text:
         prompt += f'\nHere is supporting information:\n{support_tool_responses_text}'
 
-
     response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
 
     genai_response = response_dict['response']
 
-    full_docx = await create_docx_from_markdown(genai_response)
-
-    await upload_user_output_file(username, 'lesson_plan.docx', full_docx)     
-
-    return {'tool_id': 'create_exercise_sheet', 'response': genai_response}
+    return {'tool_id': 'create_exercise_sheet', 'response': genai_response, 'create_resource_input': genai_response}
 
 
+async def rerun_tool(username: str, task_information: str, support_tool_responses_text: str, previous_run_response, improvements):
+    previous_prompt = f'''
+    Your only task is to redo a task with given improvements
+
+    Here was your previous task:
+
+    Your task is to create an educational resource based on this context:
+    {task_information}
+
+    The resource must be a Lesson Plan.
+
+    RULES:
+    - Formatted in clean Markdown.
+    - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
+    - Do not wrap the entire response in a code block.
+    '''
+
+    if support_tool_responses_text:
+        previous_prompt += f'\nHere is supporting information:\n{support_tool_responses_text}'
+
+    prompt = f'''
+    Here was your previous task:
+
+    {previous_prompt}
+
+    You previously gave this output:
+
+    {previous_run_response}
+
+    Your task is not to create a new output with teh following improvements:
+
+    {improvements}
+    '''
+
+
+
+async def create_resource(username: str, resource_input: str):
+    '''
+    inputs:
+    username: str - users username
+    resource_input: str - resource needed for input
+
+    creates output lesson plan
+    '''
+
+    full_docx = await create_docx_from_markdown(resource_input)
+
+    await upload_user_output_file(username, 'lesson_plan.docx', full_docx)

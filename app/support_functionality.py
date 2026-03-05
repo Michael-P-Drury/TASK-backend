@@ -200,6 +200,44 @@ async def run_main_tool(username: str, main_tool: str, support_tools_responses: 
     return main_tool_response
 
 
+async def rerun_main_tool(username, main_tool, support_tools_responses, relevant_chat_context, previous_main_tool_response, improvements):
+    '''
+    inputs:
+    username: str - users username
+    main_tool: str - id for main tool
+    support_tool_responses: list[str] - list of responses from support tools
+    relevant_chatr_context: str - relevant chat context for running main tool
+
+    outputs:
+    main_tool_response: str - response from main tool
+
+    runs main tool adding to full chat history that it has ran with time to run
+    '''
+
+    # adds to full chat history that main tool is running
+    full_chat_history_text = f'Running main tool: {main_tool}'
+
+    await add_chat_history(username, 'TASK', full_chat_history_text, True)
+
+    # measure time to run and run main tool
+    main_tool_start = time.time()
+
+    main_func = await get_run_tool_function(main_tool)
+
+    main_tool_response = await main_func(username, relevant_chat_context, support_tools_responses, previous_main_tool_response, improvements)
+
+    main_tool_end = time.time()
+
+    main_tool_time = main_tool_end - main_tool_start
+
+    # add to full chat history that main tool has ran and with time to run then return response from main tool
+    full_chat_history_text = f'Ran main tool: {main_tool} in {main_tool_time}s'
+
+    await add_chat_history(username, 'TASK', full_chat_history_text, True)
+
+    return main_tool_response
+
+
 
 async def create_docx_from_markdown(markdown_text):
     '''
@@ -230,3 +268,42 @@ async def create_docx_from_markdown(markdown_text):
         os.remove(temp_output_path)
 
     return docx_bytes
+
+
+
+async def run_quality_tool(username, quality_tool, post_decision_text, main_tool_response, support_tool_responses_text):
+    '''
+    inputs:
+    username: str - users username
+    quality_tool: str - id for quality tool
+    support_tool_responses: list[str] - list of responses from support tools
+    relevant_chatr_context: str - relevant chat context for running main tool
+
+    outputs:
+    quality_tool_response: str - response from quality tool
+
+    runs quality tool adding to full chat history that it has ran with time to run
+    '''
+
+    # adds to full chat history that quality check tool is running
+    full_chat_history_text = f'Running quality check tool: {quality_tool}'
+
+    await add_chat_history(username, 'TASK', full_chat_history_text, True)
+
+    # measure time to run and run main tool
+    quality_tool_start = time.time()
+
+    quality_func = await get_run_tool_function(quality_tool)
+
+    quality_tool_response = await quality_func(post_decision_text, main_tool_response, support_tool_responses_text)
+
+    quality_tool_end = time.time()
+
+    quality_tool_time = quality_tool_end - quality_tool_start
+
+    # add to full chat history that quality check tool has ran and with time to run then return response from quality tool
+    full_chat_history_text = f'Ran quality check tool: {quality_tool} in {quality_tool_time}s'
+
+    await add_chat_history(username, 'TASK', full_chat_history_text, True)
+
+    return quality_tool_response
