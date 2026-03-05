@@ -89,7 +89,7 @@ async def run_controller_agent(username: str, user_prompt: str):
 
             rerun = quality_check_response['rerun_decision']
 
-        await run_create_resources()
+        await run_create_resources(username, seperated_tools['main_tool'], main_tool_response['full_response'])
 
         main_tool_response_text = main_tool_response['response']
 
