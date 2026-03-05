@@ -7,8 +7,12 @@ K - Kick
 
 # to run
 
-install dependancies 
+install dependancies using command:
+
+pip install -r requirements.txt
 
 run postgreSQL server or have postgreSQL server to connect to for user account storage
+
+To run command:
 
 uvicorn app.main:app
