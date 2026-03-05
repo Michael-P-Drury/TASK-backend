@@ -14,7 +14,7 @@ async def get_tool_description():
     return tool_description
 
 
-async def run_tool(task_information, main_tool_response, support_tool_responses):
+async def run_tool(task_information: str, main_tool_response: str, support_tool_responses: str):
     
     prompt = f'''
 
@@ -37,12 +37,17 @@ async def run_tool(task_information, main_tool_response, support_tool_responses)
     If you think that it is of acceptable quality, you must respond with:
     FALSE|Improvements for needed improvements
 
-    If you think that the The quality of teh exercise sheet is acceptable you must reply with:
+    If you think that the The quality of the exercise sheet is acceptable you must reply with:
     TRUE
     '''
 
     response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
 
     response = response_dict['response']
+
+    rerun_decision = True
+
+    if response.lower().strip().startswith('true'):
+        rerun_decision = False
     
-    return {'tool_id': 'check_exercise_sheet_quality', 'response': response}
+    return {'tool_id': 'check_exercise_sheet_quality', 'response': response, 'rerun_decision': rerun_decision}
