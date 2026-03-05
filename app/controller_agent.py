@@ -5,7 +5,7 @@ Holds the controller agent functionality including run_controller_agent which ac
 
 from .tools.tools_directory import get_tools_descriptions_text
 from .genai.genai_call import invoke_genai
-from .support_functionality import seperate_tools, add_chat_history, run_support_tools, run_main_tool
+from .support_functionality import seperate_tools, add_chat_history, run_support_tools, run_main_tool, run_quality_tool, rerun_main_tool, run_create_resources
 from .tools.tools_functions_router import get_tool_requirements_function, get_tool_description_function
 from .tools.tools_directory import create_support_tools_responses_text
 
@@ -71,6 +71,25 @@ async def run_controller_agent(username: str, user_prompt: str):
 
         # runs main tool and sends response 
         main_tool_response = await run_main_tool(username, seperated_tools['main_tool'], support_tool_responses_text, post_decision_text)
+
+        # runs support tool to check whether needs to re-run
+        quality_check_response = await run_quality_tool(username, seperated_tools['support_tool'], post_decision_text, main_tool_response, support_tool_responses_text)
+
+        rerun = quality_check_response['rerun_decision']
+
+        while not rerun:
+
+            improvements = quality_check_response['improvements']
+
+            # runs main tool and sends response 
+            main_tool_response = await rerun_main_tool(username, seperated_tools['main_tool'], support_tool_responses_text, post_decision_text, main_tool_response, improvements)
+
+            # runs support tool to check whether needs to re-run
+            quality_check_response = await run_quality_tool(username, seperated_tools['support_tool'], post_decision_text, main_tool_response, support_tool_responses_text)
+
+            rerun = quality_check_response['rerun_decision']
+
+        await run_create_resources()
 
         main_tool_response_text = main_tool_response['response']
 

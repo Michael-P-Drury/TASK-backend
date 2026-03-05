@@ -97,3 +97,41 @@ async def run_tool(username, task_information, support_tool_responses_text):
         return {'tool_id': 'create_exercise_sheet', 'response': genai_response}
 
 
+async def rerun_tool():
+    pass
+
+
+
+async def create_resource(username: str, resource_input: str):
+    '''
+    inputs:
+    username: str - users username
+    resource_input: str - resource needed for input
+
+    creates output exercise sheet and teacher support doccument
+    '''
+
+    if '||' in resource_input:
+
+        exercise_sheet = resource_input.split('||')[0]
+
+        exercise_sheet_docx = await create_docx_from_markdown(exercise_sheet)
+
+        await upload_user_output_file(username, 'exercise_sheet.docx', exercise_sheet_docx)
+
+        teacher_support_file = resource_input.replace('||', '')
+
+        teacher_support_docx = await create_docx_from_markdown(teacher_support_file)
+
+        await upload_user_output_file(username, 'teacher_version_exercise_sheet.docx', teacher_support_docx)       
+        
+        return {'tool_id': 'create_exercise_sheet', 'response': teacher_support_file}
+    
+    else:
+
+        full_docx = await create_docx_from_markdown(resource_input)
+
+        await upload_user_output_file(username, 'teacher_version_exercise_sheet.docx', full_docx)     
+
+        return {'tool_id': 'create_exercise_sheet', 'response': resource_input}
+    
