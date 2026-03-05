@@ -5,7 +5,7 @@ support functionality for modularity in application for controller agent
 from .tools.tools_directory import tools_dict
 from .user.user_account import get_user_chat_history, set_chat_history
 import time
-from .tools.tools_functions_router import get_run_tool_function
+from .tools.tools_functions_router import get_run_tool_function, get_rerun_tool_function
 import asyncio
 import pypandoc
 import tempfile
@@ -200,7 +200,47 @@ async def run_main_tool(username: str, main_tool: str, support_tools_responses: 
     return main_tool_response
 
 
-async def rerun_main_tool(username, main_tool, support_tools_responses, relevant_chat_context, previous_main_tool_response, improvements):
+async def rerun_main_tool(username: str, main_tool: str, support_tools_responses: str, relevant_chat_context: str, previous_main_tool_response: str, improvements: str):
+    '''
+    inputs:
+    username: str - users username
+    main_tool: str - id for main tool
+    support_tool_responses: list[str] - list of responses from support tools
+    relevant_chatr_context: str - relevant chat context for running main tool
+    previous_main_tool_response: str - previous response to improve
+    improvements: str - recommedned improvements
+
+    outputs:
+    main_tool_response: str - response from main tool
+
+    runs main tool adding to full chat history that it has ran with time to run
+    '''
+
+    # adds to full chat history that main tool is running
+    full_chat_history_text = f'rerunning main tool: {main_tool}'
+
+    await add_chat_history(username, 'TASK', full_chat_history_text, True)
+
+    # measure time to run and run main tool
+    main_tool_start = time.time()
+
+    rerun_func = await get_rerun_tool_function(main_tool)
+
+    main_tool_response = await rerun_func(username, relevant_chat_context, support_tools_responses, previous_main_tool_response, improvements)
+
+    main_tool_end = time.time()
+
+    main_tool_time = main_tool_end - main_tool_start
+
+    # add to full chat history that main tool has ran and with time to run then return response from main tool
+    full_chat_history_text = f'rerunning main tool: {main_tool} in {main_tool_time}s'
+
+    await add_chat_history(username, 'TASK', full_chat_history_text, True)
+
+    return main_tool_response
+
+
+async def run_create_resources(username: str, main_tool: str, crete_resource_information: str):
     '''
     inputs:
     username: str - users username
@@ -215,27 +255,28 @@ async def rerun_main_tool(username, main_tool, support_tools_responses, relevant
     '''
 
     # adds to full chat history that main tool is running
-    full_chat_history_text = f'Running main tool: {main_tool}'
+    full_chat_history_text = f'Creating resource using main tool: {main_tool}'
 
     await add_chat_history(username, 'TASK', full_chat_history_text, True)
 
     # measure time to run and run main tool
     main_tool_start = time.time()
 
-    main_func = await get_run_tool_function(main_tool)
+    create_func = await get_run_tool_function(main_tool)
 
-    main_tool_response = await main_func(username, relevant_chat_context, support_tools_responses, previous_main_tool_response, improvements)
+    main_tool_response = await create_func(username, crete_resource_information)
 
     main_tool_end = time.time()
 
     main_tool_time = main_tool_end - main_tool_start
 
     # add to full chat history that main tool has ran and with time to run then return response from main tool
-    full_chat_history_text = f'Ran main tool: {main_tool} in {main_tool_time}s'
+    full_chat_history_text = f'Created resource using main tool: {main_tool} in {main_tool_time}s'
 
     await add_chat_history(username, 'TASK', full_chat_history_text, True)
 
     return main_tool_response
+    
 
 
 
@@ -271,7 +312,7 @@ async def create_docx_from_markdown(markdown_text):
 
 
 
-async def run_quality_tool(username, quality_tool, post_decision_text, main_tool_response, support_tool_responses_text):
+async def run_quality_tool(username: str, quality_tool: str, post_decision_text: str, main_tool_response: str, support_tool_responses_text: str):
     '''
     inputs:
     username: str - users username
