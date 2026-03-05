@@ -97,8 +97,57 @@ async def run_tool(username, task_information, support_tool_responses_text):
         return {'tool_id': 'create_exercise_sheet', 'response': genai_response}
 
 
-async def rerun_tool():
-    pass
+async def rerun_tool(username: str, task_information: str, support_tool_responses_text: str, previous_run_response: str, improvements: str):
+    previous_prompt = f'''
+    Your task is to create a two-part educational resource based on this context:
+    {task_information}
+
+    OUTPUT STRUCTURE:
+    You must provide exactly two sections, separated by the delimiter: ||
+
+    Section 1: The Student Exercise Sheet
+    - Formatted in clean Markdown.
+    - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
+
+    ||
+
+    Section 2: The Teacher Support Guide
+    - 1 sentence saying that an exercise sheet file and teacher support file was created
+    - Include a full Answer Key.
+    - Provide reasoning for the decisions made.
+    - Include any additional tips or context.
+    - Formatted in clean Markdown.
+    - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
+
+    RULES:
+    - Formatted in clean Markdown.
+    - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
+    - Do not wrap the entire response in a code block.
+    - Use the || delimiter exactly once.
+    '''
+
+    if support_tool_responses_text:
+        previous_prompt += f'\nHere is supporting information:\n{support_tool_responses_text}'
+
+    prompt = f'''
+    Here was your previous task:
+
+    {previous_prompt}
+
+    You previously gave this output:
+
+    {previous_run_response}
+
+    Your task is not to create a new output with the following improvements:
+
+    {improvements}
+    '''
+
+    response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
+
+    genai_response = response_dict['response'].replace('||', '')
+
+    return {'tool_id': 'create_exercise_sheet', 'response': genai_response, 'full_response': genai_response}
 
 
 
