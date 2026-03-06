@@ -53,7 +53,7 @@ async def run_controller_agent(username: str, user_prompt: str):
     task_response_full = f'Enough Information Decision:\n{enough_info_text}\n*Time taken: {enough_info_time}s*'
 
     if '|' in enough_info_text:
-        post_decision_text = enough_info_text.split('|')[1]
+        post_decision_text = enough_info_text.split('|', 1)[1]
     else:
         post_decision_text = enough_info_text
     
@@ -73,11 +73,11 @@ async def run_controller_agent(username: str, user_prompt: str):
         main_tool_response = await run_main_tool(username, seperated_tools['main_tool'], support_tool_responses_text, post_decision_text)
 
         # runs support tool to check whether needs to re-run
-        quality_check_response = await run_quality_tool(username, seperated_tools['support_tool'], post_decision_text, main_tool_response, support_tool_responses_text)
+        quality_check_response = await run_quality_tool(username, seperated_tools['quality_tool'], post_decision_text, main_tool_response, support_tool_responses_text)
 
         rerun = quality_check_response['rerun_decision']
 
-        while not rerun:
+        while rerun:
 
             improvements = quality_check_response['improvements']
 
@@ -85,7 +85,7 @@ async def run_controller_agent(username: str, user_prompt: str):
             main_tool_response = await rerun_main_tool(username, seperated_tools['main_tool'], support_tool_responses_text, post_decision_text, main_tool_response, improvements)
 
             # runs support tool to check whether needs to re-run
-            quality_check_response = await run_quality_tool(username, seperated_tools['support_tool'], post_decision_text, main_tool_response, support_tool_responses_text)
+            quality_check_response = await run_quality_tool(username, seperated_tools['quality_tool'], post_decision_text, main_tool_response, support_tool_responses_text)
 
             rerun = quality_check_response['rerun_decision']
 
@@ -128,18 +128,13 @@ async def enough_info_decision(main_tool_id: str, chat_history: str):
     ### EVALUATION LOGIC
     1. Look at the "REQUIRED DATA POINTS" list.
     2. Search the "CHAT HISTORY" for a specific value for EACH point.
-    3. If a data point is missing a specific subject or topic (e.g., the user asks for a "sheet" but doesn't say "Math"), the result is MISSING.
+    3. If a data point is missing, the result is MISSING.
 
     ### OUTPUT RULES
     - IF ANY POINT IS MISSING: Output ONLY "FALSE" followed by a | and then a brief question to the user.
     - IF ALL POINTS ARE FOUND: Output ONLY "TRUE" followed by a | and then context from the chat that would be helpful for performing this task: {main_tool_description}
     - STRICT: No preamble, no "I understand," no "Based on the text."
     - reply with jsust your final decision
-
-    ### EXAMPLES
-    Example 1 (Missing Topic):
-    History: "Make me an exercise sheet."
-    Output: FALSE|What subject or topic should the exercise sheet cover?
 
     ### CHAT HISTORY TO EVALUATE
     ---
@@ -150,7 +145,7 @@ async def enough_info_decision(main_tool_id: str, chat_history: str):
     '''
 
     # run genai prompt and get response and tim taken ffrom invoke_genai function
-    tool_decision_response = await invoke_genai(prompt, 'ollama', 'llama3.1', 0.05)
+    tool_decision_response = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.05)
 
     text_response = tool_decision_response['response']
     time_taken = tool_decision_response['time_taken']
@@ -204,7 +199,7 @@ async def make_tool_decision(chat_history: str):
     '''
 
     # get entire genai response and return
-    tool_decision_response = await invoke_genai(prompt, 'ollama', 'llama3.1', 0.05)
+    tool_decision_response = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.05)
 
     return tool_decision_response
 

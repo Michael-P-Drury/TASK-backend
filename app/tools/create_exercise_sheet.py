@@ -72,29 +72,7 @@ async def run_tool(username, task_information, support_tool_responses_text):
 
     genai_response = response_dict['response']
 
-    if '||' in genai_response:
-
-        exercise_sheet = genai_response.split('||')[0]
-
-        exercise_sheet_docx = await create_docx_from_markdown(exercise_sheet)
-
-        await upload_user_output_file(username, 'exercise_sheet.docx', exercise_sheet_docx)
-
-        teacher_support_file = genai_response.replace('||', '')
-
-        teacher_support_docx = await create_docx_from_markdown(teacher_support_file)
-
-        await upload_user_output_file(username, 'teacher_version_exercise_sheet.docx', teacher_support_docx)       
-        
-        return {'tool_id': 'create_exercise_sheet', 'response': teacher_support_file}
-    
-    else:
-
-        full_docx = await create_docx_from_markdown(genai_response)
-
-        await upload_user_output_file(username, 'teacher_version_exercise_sheet.docx', full_docx)     
-
-        return {'tool_id': 'create_exercise_sheet', 'response': genai_response}
+    return {'tool_id': 'create_exercise_sheet', 'response': genai_response, 'full_response': genai_response}
 
 
 async def rerun_tool(username: str, task_information: str, support_tool_responses_text: str, previous_run_response: str, improvements: str):
@@ -141,6 +119,10 @@ async def rerun_tool(username: str, task_information: str, support_tool_response
     Your task is not to create a new output with the following improvements:
 
     {improvements}
+
+    You must reply with just the updated exercise sheet following the same rules as the initial instructions, with the improvements.
+
+    Do not give any information about the improvements you made or why you made them, just the new exercise sheet output.
     '''
 
     response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)

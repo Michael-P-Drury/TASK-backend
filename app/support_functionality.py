@@ -5,7 +5,7 @@ support functionality for modularity in application for controller agent
 from .tools.tools_directory import tools_dict
 from .user.user_account import get_user_chat_history, set_chat_history
 import time
-from .tools.tools_functions_router import get_run_tool_function, get_rerun_tool_function
+from .tools.tools_functions_router import get_run_tool_function, get_rerun_tool_function, get_create_resource_tool_function
 import asyncio
 import pypandoc
 import tempfile
@@ -28,7 +28,7 @@ async def seperate_tools(decision_text: str):
     # initiates out different types of tools as empty strings/ lists
     main_tool = ''
     support_tools = []
-    quality_tools = []
+    quality_tool = ''
     halucinated_tools = []
     extra_main_tools = []
     seperated_tools_text_list = []
@@ -52,7 +52,7 @@ async def seperate_tools(decision_text: str):
                 support_tools.append(tool_id)
             
             else:
-                quality_tools.append(tool_id)
+                quality_tool = tool_id
 
         else:
             halucinated_tools.append(tool_id)
@@ -64,8 +64,8 @@ async def seperate_tools(decision_text: str):
     if support_tools:
         seperated_tools_text_list.append(f'Support tools: *{", ".join(support_tools)}*')
 
-    if quality_tools:
-        seperated_tools_text_list.append(f'Quality tools: *{", ".join(quality_tools)}*')
+    if quality_tool:
+        seperated_tools_text_list.append(f'Quality tool: *{quality_tool}*')
 
     if halucinated_tools:
         seperated_tools_text_list.append(f'Halucinated tools: *{", ".join(halucinated_tools)}*')
@@ -75,8 +75,7 @@ async def seperate_tools(decision_text: str):
 
     seperated_tools_text = '\n'.join(seperated_tools_text_list)
 
-    return {'main_tool': main_tool, 'support_tools': support_tools, 'quality_tools': quality_tools, 'halucinated_tools': halucinated_tools, 'extra_main_tools': extra_main_tools, 'seperated_tools_text': seperated_tools_text}
-
+    return {'main_tool': main_tool, 'support_tools': support_tools, 'quality_tool': quality_tool, 'halucinated_tools': halucinated_tools, 'extra_main_tools': extra_main_tools, 'seperated_tools_text': seperated_tools_text}
 
 
 
@@ -262,7 +261,7 @@ async def run_create_resources(username: str, main_tool: str, crete_resource_inf
     # measure time to run and run main tool
     main_tool_start = time.time()
 
-    create_func = await get_run_tool_function(main_tool)
+    create_func = await get_create_resource_tool_function(main_tool)
 
     main_tool_response = await create_func(username, crete_resource_information)
 

@@ -47,7 +47,16 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
 
     rerun_decision = True
 
+    improvements = None
+
     if response.lower().strip().startswith('true'):
         rerun_decision = False
+
+    else:
+        if '|' in response:
+            improvements = response.split('|', 1)[1]
+
+        else:
+            improvements = response.replace('FALSE', '', 1)
     
-    return {'tool_id': 'check_exercise_sheet_quality', 'response': response, 'rerun_decision': rerun_decision}
+    return {'tool_id': 'check_exercise_sheet_quality', 'improvements': improvements, 'rerun_decision': rerun_decision}
