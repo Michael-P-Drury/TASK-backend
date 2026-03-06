@@ -68,7 +68,7 @@ async def run_tool(username, task_information, support_tool_responses_text):
     if support_tool_responses_text:
         prompt += f'\nHere is supporting information:\n{support_tool_responses_text}'
 
-    response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
+    response_dict = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.7)
 
     genai_response = response_dict['response']
 

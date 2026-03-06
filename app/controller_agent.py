@@ -119,7 +119,7 @@ async def enough_info_decision(main_tool_id, chat_history):
     ### FINAL DECISION
     '''
 
-    tool_decision_response = await invoke_genai(prompt, 'ollama', 'llama3.1', 0.05)
+    tool_decision_response = await invoke_genai(prompt, 'cerebras', 'llama3.1', 0.05)
 
     text_response = tool_decision_response['response']
     time_taken = tool_decision_response['time_taken']
