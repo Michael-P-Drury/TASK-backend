@@ -22,7 +22,6 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
     '''
     
     prompt = f'''
-
     You are a primary school lesson plan quality check tool, your one job is to determine if a lesson plan created is acceptable quality:
 
     Here is a lesson plan created by GenAI:
@@ -43,7 +42,7 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
     FALSE|Improvements for needed improvements
 
     If you think that the The quality of the lesson plan is acceptable you must reply with:
-    TRUE
+    TRUE|none
     '''
 
     response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
@@ -52,7 +51,16 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
 
     rerun_decision = True
 
+    improvements = None
+
     if response.lower().strip().startswith('true'):
         rerun_decision = False
+
+    else:
+        if '|' in response:
+            improvements = response.split('|', 1)[1]
+
+        else:
+            improvements = response.replace('FALSE', '', 1)
     
-    return {'tool_id': 'check_exercise_sheet_quality', 'response': response, 'rerun_decision': rerun_decision}
+    return {'tool_id': 'check_exercise_sheet_quality', 'improvements': improvements, 'rerun_decision': rerun_decision}

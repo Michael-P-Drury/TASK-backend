@@ -56,7 +56,7 @@ async def run_tool(username: str, task_information: str, support_tool_responses_
 
     genai_response = response_dict['response']
 
-    return {'tool_id': 'create_exercise_sheet', 'response': genai_response, 'create_resource_input': genai_response}
+    return {'tool_id': 'create_exercise_sheet', 'response': genai_response, 'full_response': genai_response}
 
 
 async def rerun_tool(username: str, task_information: str, support_tool_responses_text: str, previous_run_response: str, improvements: str):
@@ -91,6 +91,10 @@ async def rerun_tool(username: str, task_information: str, support_tool_response
     Your task is not to create a new output with the following improvements:
 
     {improvements}
+
+    You must reply with just the updated lesson plan following the same rules as the initial instructions, with the improvements.
+
+    Do not give any information about the improvements you made or why you made them, just the new lesson plan output.
     '''
 
     response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)

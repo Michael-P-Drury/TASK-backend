@@ -22,46 +22,52 @@ async def invoke_genai(prompt: str, provider: str, model_id: str, temperature: f
     for invoking genai models
     '''
 
-    try:
-    
-        if provider == 'ollama':
-            message = {'role': 'user', 'content': prompt}
-            
-            start = time.time()
-            response = await AsyncClient().chat(
-                model= model_id,
-                messages=[message],
-                options={
-                    'temperature': temperature
-                }
-            )
-            end = time.time()
-            time_taken = end - start
+    run_count = 0
 
-            response = response['message']['content']
-            
-        elif provider == 'cerebras':
-            start = time.time()
-            
-            client = AsyncCerebras(api_key=os.getenv('CEREBRAS_API_KEY'))
+    rerun = True
 
-            response = await client.chat.completions.create(
-                model=model_id,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature
-            )
+    while run_count <= 10 and rerun:
 
-            response = response.choices[0].message.content
+        try:
+        
+            if provider == 'ollama':
+                message = {'role': 'user', 'content': prompt}
+                
+                start = time.time()
+                response = await AsyncClient().chat(
+                    model= model_id,
+                    messages=[message],
+                    options={
+                        'temperature': temperature
+                    }
+                )
+                end = time.time()
+                time_taken = end - start
 
-            end = time.time()
-            time_taken = end - start
+                response = response['message']['content']
+                
+            elif provider == 'cerebras':
+                start = time.time()
+                
+                client = AsyncCerebras(api_key=os.getenv('CEREBRAS_API_KEY'))
 
-        else:
-            return {'status': 200, 'response': None, 'time_taken': None}
+                response = await client.chat.completions.create(
+                    model=model_id,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=temperature
+                )
 
-        return {'status': 200, 'response': response, 'time_taken': time_taken}
+                response = response.choices[0].message.content
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
+                end = time.time()
+                time_taken = end - start
 
-        return {'status': 200, 'response': None, 'time_taken': None}
+            else:
+                return {'status': 200, 'response': None, 'time_taken': None}
+
+            return {'status': 200, 'response': response, 'time_taken': time_taken}
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+    return {'status': 200, 'response': None, 'time_taken': None}
