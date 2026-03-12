@@ -11,24 +11,9 @@ async def get_tool_description():
     Returns tool description
     '''
     
-    tool_description = 'create lesson plans'
+    tool_description = 'for when users ask questions about previous outputs, have general questions or for general conversation'
 
     return tool_description
-
-
-
-async def get_output_resource_type():
-    '''
-    outputs:
-    str - output resource
-
-    returns output resource type
-    '''
-    
-    tool_type = 'lesson plan'
-    
-    return tool_type
-
 
 
 async def get_tool_requirements():
@@ -39,7 +24,7 @@ async def get_tool_requirements():
     Returns tool requirements
     '''
 
-    tool_requirements = '1. Topic must be present in chat history: A specific topic for the exercise sheet.'
+    tool_requirements = 'No requirements needed'
 
     return tool_requirements
 
@@ -53,15 +38,10 @@ async def run_tool(username: str, task_information: str, support_tool_responses_
     '''
 
     prompt = f'''
-    Your task is to create an educational resource based on this context:
+    Your task is just to answer general questions:
     {task_information}
 
-    The resource must be a Lesson Plan.
-
-    RULES:
-    - Formatted in clean Markdown.
-    - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
-    - Do not wrap the entire response in a code block.
+    YOU MUST Reply in markdown so that it can be rendered
     '''
 
     if support_tool_responses_text:
@@ -71,9 +51,7 @@ async def run_tool(username: str, task_information: str, support_tool_responses_
 
     genai_response = response_dict['response']
 
-    user_response = 'lesson plan created.'
-
-    return {'tool_id': 'create_exercise_sheet', 'response': user_response, 'full_response': genai_response}
+    return {'tool_id': 'create_exercise_sheet', 'response': genai_response, 'full_response': genai_response}
 
 
 async def rerun_tool(username: str, task_information: str, support_tool_responses_text: str, previous_run_response: str, improvements: str):
@@ -118,9 +96,7 @@ async def rerun_tool(username: str, task_information: str, support_tool_response
 
     genai_response = response_dict['response']
 
-    user_response = 'lesson plan created.'
-
-    return {'tool_id': 'create_exercise_sheet', 'response': user_response, 'full_response': genai_response}
+    return {'tool_id': 'create_exercise_sheet', 'response': genai_response, 'full_response': genai_response}
 
 
 
@@ -130,13 +106,7 @@ async def create_resource(username: str, resource_input: str):
     username: str - users username
     resource_input: str - resource needed for input
 
-    creates output lesson plan
+    doent create any output file
     '''
 
-    full_docx = await create_docx_from_markdown(resource_input)
-
-    output_filename = 'lesson_plan.docx'
-
-    await upload_user_output_file(username, output_filename, full_docx)
-
-    return output_filename
+    pass

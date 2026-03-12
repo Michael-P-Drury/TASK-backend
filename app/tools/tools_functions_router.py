@@ -92,3 +92,21 @@ async def get_tool_requirements_function(tool_id: str):
     func = getattr(module, 'get_tool_requirements')
 
     return func
+
+
+
+async def get_tool_resource_function(tool_id: str):
+    '''
+    inputs:
+
+    tool_id : str - the tool id for the tool you want the get tool's type of output resource for
+    
+    takes input of tool id and returns function for getting th etype of output resouce for
+    '''
+
+    module_path =  f".{tool_id}"
+
+    module = importlib.import_module(module_path, package = __package__)
+    func = getattr(module, 'get_output_resource_type')
+
+    return func

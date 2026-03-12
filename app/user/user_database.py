@@ -15,7 +15,7 @@ load_dotenv()
     
 # connection to PostgreSQL database to be imported when used
 DATABASE_URL = os.getenv('POSTGRESQL_URL')
-engine = create_engine(DATABASE_URL)
+postgres_engine = create_engine(DATABASE_URL)
 
 Base = declarative_base()
 
@@ -31,3 +31,10 @@ class User(Base):
     full_chat_history = Column(String, nullable=True)
 
 
+class ReferenceOutputs(Base):
+    __tablename__ = 'reference_outputs'
+    id = Column(Integer, primary_key = True)
+    username = Column(String, nullable = False)
+    tool_id = Column(String, nullable = False)
+    content = Column(String, nullable = False)
+    filename = Column(String, nullable = False)

@@ -26,7 +26,7 @@ async def invoke_genai(prompt: str, provider: str, model_id: str, temperature: f
 
     rerun = True
 
-    while run_count <= 10 and rerun:
+    while run_count <= 100 and rerun:
 
         try:
         

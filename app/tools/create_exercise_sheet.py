@@ -1,4 +1,4 @@
-from ..genai.genai_call import invoke_genai
+from ..ai_capability.genai_call import invoke_genai
 from ..data_storage.s3_functionality import upload_user_output_file
 from ..support_functionality import create_docx_from_markdown
 
@@ -27,6 +27,19 @@ async def get_tool_requirements():
     tool_requirements = '1. Topic must be present in chat history: A specific topic for the exercise sheet.'
 
     return tool_requirements
+
+
+async def get_output_resource_type():
+    '''
+    outputs:
+    str - output resource
+
+    returns output resource type
+    '''
+    
+    tool_type = 'exercise sheet'
+    
+    return tool_type
 
 
 async def run_tool(username, task_information, support_tool_responses_text):
@@ -72,7 +85,9 @@ async def run_tool(username, task_information, support_tool_responses_text):
 
     genai_response = response_dict['response']
 
-    return {'tool_id': 'create_exercise_sheet', 'response': genai_response, 'full_response': genai_response}
+    user_response = 'exercise sheet created.'
+
+    return {'tool_id': 'create_exercise_sheet', 'response': user_response, 'full_response': genai_response}
 
 
 async def rerun_tool(username: str, task_information: str, support_tool_responses_text: str, previous_run_response: str, improvements: str):
@@ -127,9 +142,11 @@ async def rerun_tool(username: str, task_information: str, support_tool_response
 
     response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
 
-    genai_response = response_dict['response'].replace('||', '')
+    genai_response = response_dict['response']
 
-    return {'tool_id': 'create_exercise_sheet', 'response': genai_response, 'full_response': genai_response}
+    user_response = 'exercise sheet created.'
+
+    return {'tool_id': 'create_exercise_sheet', 'response': user_response, 'full_response': genai_response}
 
 
 
@@ -141,6 +158,8 @@ async def create_resource(username: str, resource_input: str):
 
     creates output exercise sheet and teacher support doccument
     '''
+
+    output_filename = 'teacher_version_exercise_sheet.docx'
 
     if '||' in resource_input:
 
@@ -154,15 +173,15 @@ async def create_resource(username: str, resource_input: str):
 
         teacher_support_docx = await create_docx_from_markdown(teacher_support_file)
 
-        await upload_user_output_file(username, 'teacher_version_exercise_sheet.docx', teacher_support_docx)       
+        await upload_user_output_file(username, output_filename, teacher_support_docx)
         
-        return {'tool_id': 'create_exercise_sheet', 'response': teacher_support_file}
+        return output_filename
     
     else:
 
         full_docx = await create_docx_from_markdown(resource_input)
 
-        await upload_user_output_file(username, 'teacher_version_exercise_sheet.docx', full_docx)     
+        await upload_user_output_file(username, output_filename, full_docx)     
 
-        return {'tool_id': 'create_exercise_sheet', 'response': resource_input}
+        return output_filename
     
