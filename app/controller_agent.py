@@ -4,10 +4,12 @@ Holds the controller agent functionality including run_controller_agent which ac
 
 
 from .tools.tools_directory import get_tools_descriptions_text
-from .genai.genai_call import invoke_genai
+from .ai_capability.genai_call import invoke_genai
 from .support_functionality import seperate_tools, add_chat_history, run_support_tools, run_main_tool, run_quality_tool, rerun_main_tool, run_create_resources
 from .tools.tools_functions_router import get_tool_requirements_function, get_tool_description_function
 from .tools.tools_directory import create_support_tools_responses_text
+from .user.user_account import add_output_reference, get_output_references
+from .tools.tools_directory import main_tool_create_resouce_dict
 
 
 
@@ -29,14 +31,27 @@ async def run_controller_agent(username: str, user_prompt: str):
     condensed_chat_history = await add_chat_history(username, 'User', user_prompt, False) 
     await add_chat_history(username, 'User', user_prompt, True)
 
+    condensed_chat_history = condensed_chat_history.replace('|-SPLIT-|', '')
+
     # runs tool decision, deciding what tools are too be ran
-    tool_decision_response = await make_tool_decision(condensed_chat_history)
+    tool_decision_response = await make_tool_decision(condensed_chat_history, username)
 
     decision_text = tool_decision_response['response']
     decision_time = tool_decision_response['time_taken']
 
     # runs seperate tools to seperate outputs into dinctionary for each type of tool as well as text output for decided tools
     seperated_tools = await seperate_tools(decision_text)
+
+    if not seperated_tools['main_tool']:
+        # adds tool decidion to full chat history
+        task_response = f'Tool Decision:\nNo main tool chosen.\n*Time taken: {decision_time}s*'
+        await add_chat_history(username, 'TASK', task_response, True)
+
+        condensed_task_response = 'No main task chosen sorry.'
+
+        await add_chat_history(username, 'TASK', condensed_task_response, False)
+
+        return {'status': status, 'message': message}
 
     seperated_tools_text = seperated_tools['seperated_tools_text']
 
@@ -63,8 +78,11 @@ async def run_controller_agent(username: str, user_prompt: str):
         await add_chat_history(username, 'TASK', post_decision_text, False)
     
     else:
+
+        support_tools_support_info = {'task': post_decision_text, 'main_tool': seperated_tools['main_tool']}
+
         # runs support tools asyncrenously and creates 
-        support_tools_responses = await run_support_tools(username, seperated_tools['support_tools'])
+        support_tools_responses = await run_support_tools(username, seperated_tools['support_tools'], support_tools_support_info)
 
         # creates one string of text for responses
         support_tool_responses_text = await create_support_tools_responses_text(support_tools_responses)
@@ -89,7 +107,11 @@ async def run_controller_agent(username: str, user_prompt: str):
 
             rerun = quality_check_response['rerun_decision']
 
-        await run_create_resources(username, seperated_tools['main_tool'], main_tool_response['full_response'])
+        if main_tool_create_resouce_dict[seperated_tools['main_tool']]:
+
+            reference_filename = await run_create_resources(username, seperated_tools['main_tool'], main_tool_response['full_response'])
+
+            await add_output_reference(username, seperated_tools['main_tool'], main_tool_response['full_response'], reference_filename)
 
         main_tool_response_text = main_tool_response['response']
 
@@ -107,7 +129,6 @@ async def enough_info_decision(main_tool_id: str, chat_history: str):
 
     Used to make decision on whether the agent has enough information yet to run the main tool.
     '''
-
 
     # getting requirement and description for main tool to put into prompt
     requirements_func = await get_tool_requirements_function(main_tool_id)
@@ -129,13 +150,14 @@ async def enough_info_decision(main_tool_id: str, chat_history: str):
     1. Look at the "REQUIRED DATA POINTS" list.
     2. Search the "CHAT HISTORY" for a specific value for EACH point.
     3. If a data point is missing, the result is MISSING.
+    4 If The user is requesting changes to be made and you believe to an existing created resource, you must include the changes in the context from the chat that would be helpful
+
 
     ### OUTPUT RULES
     - IF ANY POINT IS MISSING: Output ONLY "FALSE" followed by a | and then a brief question to the user.
-    - IF ALL POINTS ARE FOUND: Output ONLY "TRUE" followed by a | and then context from the chat that would be helpful for performing this task: {main_tool_description}
+    - IF ALL POINTS ARE FOUND: Output ONLY "TRUE" followed by a | and then context from the chat of what teh user is asking and what would be helpful performing what the user wants/ for performing this task: {main_tool_description}
     - STRICT: No preamble, no "I understand," no "Based on the text."
     - reply with jsust your final decision
-
     ### CHAT HISTORY TO EVALUATE
     ---
     {chat_history}
@@ -161,15 +183,31 @@ async def enough_info_decision(main_tool_id: str, chat_history: str):
 
 
 
-async def make_tool_decision(chat_history: str):
+async def make_tool_decision(chat_history: str, username: str):
     '''
     inputs:
 
     chat_history: str - the chat history so that tool decisions can be made based on request
+    usernameL: str - users username
     '''
 
     # gets description of all of the tools in a formatted string for genai to decide against.
     tools_descriptions_string = await get_tools_descriptions_text()
+
+    output_resources = await get_output_references(username)
+
+    if output_resources:
+
+        generated_tool_ids_list = []
+
+        for resource in output_resources:
+            generated_tool_ids_list.append(resource['tool_id'])
+
+        generated_tool_ids = ', '.join(generated_tool_ids_list)
+        
+    else:
+        generated_tool_ids = 'None'
+
         
     prompt = f'''
     You are a tool-selection engine. Your goal is to identify the specific IDs required to fulfill the user's last request.
@@ -177,11 +215,16 @@ async def make_tool_decision(chat_history: str):
     ### TOOL DATA:
     {tools_descriptions_string}
 
+    ### PREVIOUSLY GENERATED RESOURCES USING:
+    {generated_tool_ids}
+
     ### RULES:
-    1. You MUST select exactly ONE 'main' tool. If none apply, output "NONE" and stop.
-    2. You may select at most ONE 'quality' tool that matches the 'main' tool.
+    1. You MUST select exactly ONE 'main' tool.
+    2. You may select exactky ONE 'quality' tool that matches the 'main' tool.
     3. You may select 'support' tools only if they directly relate to the 'main' tool and chat requirements.
-    4. Output ONLY the IDs. No categories, no bullets, no intro text.
+    4. Output ONLY the IDs. No categories, no bullets, no into text.
+    5. If the user is requesting changes to be made, you must incude get_previous_output_for_changes in the support tools 
+    and the main tool you select must be the main tool that was run which created the resource to be updated.
 
     ### EXAMPLE:
     User: "Help me design a worksheet about dogs."
@@ -203,4 +246,3 @@ async def make_tool_decision(chat_history: str):
 
     return tool_decision_response
 
-    

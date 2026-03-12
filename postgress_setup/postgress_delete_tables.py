@@ -1,8 +1,8 @@
-from typing import Optional
 from dotenv import load_dotenv
 import os
 from sqlalchemy import create_engine, Column, String, Integer
 from sqlalchemy.orm import declarative_base
+from pgvector.sqlalchemy import Vector
 
 load_dotenv() 
 
@@ -19,6 +19,25 @@ class User(Base):
     class_context = Column(String, nullable=True)
     chat_condensed_history = Column(String, nullable=True)
     full_chat_history = Column(String, nullable=True)
+
+
+class SupportFiles(Base):
+    __tablename__ = 'support_files'
+    id = Column(Integer, primary_key = True)
+    username = Column(String, unique = True, nullable = False)
+    filename = Column(String, nullable = True)
+    content = Column(String, nullable = True)
+    embedding = Column(Vector(768))
+
+
+
+class ReferenceOutputs(Base):
+    __tablename__ = 'reference_outputs'
+    id = Column(Integer, primary_key = True)
+    username = Column(String, nullable = False)
+    tool_id = Column(String, nullable = False)
+    content = Column(String, nullable = False)
+    filename = Column(String, nullable = False)
 
 
 Base.metadata.drop_all(engine)

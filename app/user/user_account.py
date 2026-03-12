@@ -4,11 +4,15 @@ Holds user account functionality
 
 import bcrypt
 from sqlalchemy.orm import Session
-from .user_database import engine, User
+from .user_database import postgres_engine, User, ReferenceOutputs
 import jwt
 from dotenv import load_dotenv
 import os
-from ..data_storage.s3_functionality import delete_user_s3_data
+from ..data_storage.s3_functionality import delete_user_s3_data, delete_user_output_file_S3
+import re
+from ..tools.tools_directory import linked_outputs
+
+
 
 load_dotenv()
 
@@ -25,7 +29,7 @@ async def login_user(username: str, password: str):
 
     try:
         # make a session with sqlalchemy
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if not user:
@@ -67,9 +71,9 @@ async def create_user(username: str, password: str):
 
         hashed_password_str = hashed_password.decode('utf-8')
 
-        new_user = User(username=username, password=hashed_password_str)
+        new_user = User(username = username, password = hashed_password_str)
         
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             
             # checks to see if user already exists
             existing_user = session.query(User).filter(User.username == username).first()
@@ -82,10 +86,12 @@ async def create_user(username: str, password: str):
                 session.commit()
                 return {'status': 200, 'message': 'User created successfully'}
             
-            except:
+            except Exception as e:
+                print(e)
                 return {'status': 400, 'message': 'Error creating user'}
             
-    except:
+    except Exception as e:
+        print(e)
         return {'status': 400, 'message': 'Error creating user'}
 
 
@@ -112,7 +118,7 @@ async def delete_user_account(jwt_token: str):
             return {'status': 400, 'message': 'Invalid token'}
     
         # creates sqlalchemy session and deletes account from table
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if user is None:
@@ -146,7 +152,7 @@ async def get_class_context_and_year(username: str):
         if username is None:
             return {'status': 400, 'message': 'Invalid username', 'user_data': None}
         
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if user is None:
@@ -187,7 +193,7 @@ async def get_user_data(jwt_token: str):
         if username is None:
             return {'status': 400, 'message': 'Invalid jwt token', 'user_data': None}
         
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if user is None:
@@ -247,7 +253,7 @@ async def update_user_year_group(jwt_token: str, year_group: int):
         if int(year_group) <= 0 or int(year_group) > 6:
             return {'status': 400, 'message': 'Year group must be between 1 and 6'}
         
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
             if user is None:
                 return {'status': 400, 'message': 'User does not exist'}
@@ -280,8 +286,7 @@ async def update_user_class_context(jwt_token: str, class_context: str):
         if username is None:
             return {'status': 400, 'message': 'Error with JWT token'}
 
-        
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
             if user is None:
                 return {'status': 400, 'message': 'User does not exist'}
@@ -315,7 +320,7 @@ async def get_username_from_jwt_token(jwt_token: str):
             return None
     
 
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             if user is None:
@@ -341,7 +346,7 @@ async def get_user_chat_history(username: str, full_history: bool):
     returning a users chat history
     '''
     try:
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
             
             if full_history:
@@ -354,6 +359,27 @@ async def get_user_chat_history(username: str, full_history: bool):
     
     except:
         return {'status': 400, 'message': 'Error clearing chat history', 'chat_history': None}
+    
+
+
+async def seperate_chat_history(chat_history: str):
+    '''
+    chat_history: str - chat history to turn into a list
+    '''
+
+    chat_history_list = chat_history.split('|-SPLIT-|')
+
+    return_list = []
+
+    for chat in chat_history_list:
+        sender = 'task'
+        check_chat = re.sub(r'[^a-zA-Z0-9]', '', chat)
+        if check_chat.lower().strip().startswith('user'):
+            sender = 'user'
+
+        return_list.append({'sender': sender, 'message': chat})
+
+    return return_list
             
     
 
@@ -368,7 +394,7 @@ async def set_chat_history(username: str, chat_history: str, full_history: bool)
     sets a users chat history
     '''
 
-    with Session(engine) as session:
+    with Session(postgres_engine) as session:
         user = session.query(User).filter(User.username == username).first()
 
         if full_history:
@@ -390,7 +416,7 @@ async def clear_user_chat(username: str):
 
     try:
 
-        with Session(engine) as session:
+        with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
 
             user.full_chat_history = ''
@@ -401,3 +427,103 @@ async def clear_user_chat(username: str):
         
     except:
         return {'status': 400, 'message': 'Error clearing History Cleared'}
+
+
+
+async def add_output_reference(username: str, tool_id: str, content: str, filename: str):
+    '''
+    username: str - a users username
+    tool_id: str - tool_id that the made the reference output
+    content: str - content of the referencable output
+    filename: str - string for teh filename to be upploaded
+    '''
+    try:
+        with Session(postgres_engine) as session:
+            existing_output = session.query(ReferenceOutputs).filter( ReferenceOutputs.username == username, ReferenceOutputs.tool_id == tool_id).first()
+            if existing_output:
+                existing_output.content = content
+            else:
+                new_output = ReferenceOutputs(username=username, tool_id=tool_id, content=content, filename=filename)
+                session.add(new_output)
+            
+            session.commit()
+            
+    except Exception as e:
+        print(f"Error updating/adding output reference: {e}")
+
+
+
+async def delete_reference_from_filename(username: str, filename: str):
+    '''
+    username: str - a users username
+    filename: str - string for teh filename to be upploaded
+    '''
+
+
+
+
+async def get_output_references(username: str):
+    '''
+    inputs:
+    username: str - users username
+
+    gets the users reference output resources created by the tool.
+    '''
+
+    return_list = []
+
+    with Session(postgres_engine) as session:
+
+        outputs = session.query(ReferenceOutputs).filter(ReferenceOutputs.username == username).all()
+
+        for output in outputs:
+            return_list.append({'tool_id': output.tool_id, 'content': output.content})
+    
+    return return_list
+
+
+
+async def delete_user_output_file(username: str, filename: str):
+
+    try:
+        delete_files = [filename]
+
+        if filename in linked_outputs.keys():
+            for extra_file in linked_outputs[filename]:
+                delete_files.append(extra_file)
+
+        for filename in delete_files:
+            await delete_user_output_file_S3(username, filename)
+            await delete_user_reference_file(username, filename)
+
+        return 200, 'deleted successfully'
+
+    except Exception as e:
+
+        print(e)
+        return 400, 'failed to delete user file'
+    
+
+async def delete_user_reference_file(username: str, filename: str):
+    '''
+    inputs:
+    username: str - users username
+    filename: str - the filename stored in the database record
+    
+    deletes the AI reference from postgres so the agent forgets it.
+    '''
+    try:
+        with Session(postgres_engine) as session:
+
+            reference = session.query(ReferenceOutputs).filter(ReferenceOutputs.username == username, ReferenceOutputs.filename == filename).first()
+
+            if reference:
+                session.delete(reference)
+                session.commit()
+                return True
+            
+            return False
+            
+    except Exception as e:
+        print(f"Error deleting database reference for {filename}: {e}")
+        return False

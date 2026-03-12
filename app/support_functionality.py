@@ -97,9 +97,11 @@ async def add_chat_history(username: str, chat_sender: str, chat_message: str, f
     current_chat_history = await get_user_chat_history(username, full_history)
     current_chat_history = current_chat_history['chat_history']
 
+    chat_seperator = '|-SPLIT-|'
+
     # there there is already a history, add to it and if not, initiate chat history, formatted in markdown
     if current_chat_history:
-        new_chat_history = current_chat_history + '\n\n**' + chat_sender + ':**\n' + chat_message
+        new_chat_history = current_chat_history + f'\n\n{chat_seperator}**' + chat_sender + ':**\n' + chat_message
 
     else:
         new_chat_history = '**' + chat_sender + ':**\n' + chat_message
@@ -112,7 +114,7 @@ async def add_chat_history(username: str, chat_sender: str, chat_message: str, f
 
 
 
-async def run_support_tools(username: str, support_tools_list: list):
+async def run_support_tools(username: str, support_tools_list: list, support_info):
     '''
     inputs:
     username: str - users username
@@ -132,17 +134,14 @@ async def run_support_tools(username: str, support_tools_list: list):
 
         support_func = await get_run_tool_function(tool)
 
-        support_info = {}
-
         async_tasks.append(support_func(username, support_info))
 
     # adds to full chat history that suport tools are running
-    full_chat_history_text = f'Running support tools: {" ,".join(support_tools_list)}'
+    full_chat_history_text = f'Running support tools: {", ".join(support_tools_list)}'
 
     await add_chat_history(username, 'TASK', full_chat_history_text, True)
 
     # measures time to run and runs tasks
-
     support_tools_start = time.time()
 
     support_tools_responses = await asyncio.gather(*async_tasks)
@@ -153,7 +152,7 @@ async def run_support_tools(username: str, support_tools_list: list):
 
     # adds to full chat history that the support tools have ran
 
-    full_chat_history_text = f'Ran support tools: {" ,".join(support_tools_list)} in {support_tools_time}s'
+    full_chat_history_text = f'Ran support tools: {", ".join(support_tools_list)} in {support_tools_time}s'
 
     await add_chat_history(username, 'TASK', full_chat_history_text, True)
 

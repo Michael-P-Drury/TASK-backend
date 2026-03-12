@@ -1,4 +1,4 @@
-from ..genai.genai_call import invoke_genai
+from ..ai_capability.genai_call import invoke_genai
 
 
 async def get_tool_description():

@@ -4,8 +4,8 @@ routes for user functionailty
 
 from fastapi import APIRouter, UploadFile, File, Form
 from .models import LoginSchema, UserSchema, SignupSchema, UpdateYearGroupSchema, DeleteUserFileSchema, UpdateClassContextSchema
-from ..user.user_account import create_user, login_user, delete_user_account, get_user_data, update_user_year_group, update_user_class_context, get_username_from_jwt_token
-from ..data_storage.s3_functionality import upload_user_working_file, delete_user_working_file, get_user_working_files, delete_user_output_file, get_user_output_files, download_user_output_file
+from ..user.user_account import create_user, login_user, delete_user_account, get_user_data, update_user_year_group, update_user_class_context, get_username_from_jwt_token, delete_user_output_file
+from ..data_storage.s3_functionality import upload_user_support_file, delete_user_support_file, get_user_support_files, get_user_output_files, download_user_output_file
 import io
 from fastapi.responses import StreamingResponse
 
@@ -111,15 +111,15 @@ async def update_class_context(data: UpdateClassContextSchema):
     return {'status': status, 'message': message}
 
 
-@router.post('/upload_working_file')
-async def upload_working_file( jwt_token: str = Form(...), file: UploadFile = File(...)):
+@router.post('/upload_support_file')
+async def upload_support_file( jwt_token: str = Form(...), file: UploadFile = File(...)):
     file_content = await file.read()
     filename = file.filename
 
     username = await get_username_from_jwt_token(jwt_token)
     
     if username:
-        status, message = await upload_user_working_file(username, filename, file_content)
+        status, message = await upload_user_support_file(username, filename, file_content)
 
     else:
         status = 400
@@ -128,8 +128,8 @@ async def upload_working_file( jwt_token: str = Form(...), file: UploadFile = Fi
     return {'status': status, 'message': message}
 
 
-@router.post('/delete_working_file')
-async def upload_working_file( data: DeleteUserFileSchema ):
+@router.post('/delete_support_file')
+async def upload_support_file( data: DeleteUserFileSchema ):
     
     filename = data.filename
     jwt_token = data.jwt_token
@@ -137,7 +137,7 @@ async def upload_working_file( data: DeleteUserFileSchema ):
     username = await get_username_from_jwt_token(jwt_token)
     
     if username:
-        status, message = await delete_user_working_file(username, filename)
+        status, message = await delete_user_support_file(username, filename)
 
     else:
         status = 400
@@ -191,21 +191,21 @@ async def download_output_file( data: DeleteUserFileSchema ):
     return {'status': status, 'message': message}
 
 
-@router.post('/get_working_files')
-async def get_working_files(data: UserSchema):
+@router.post('/get_support_files')
+async def get_support_files(data: UserSchema):
     jwt_token = data.jwt_token
 
     username = await get_username_from_jwt_token(jwt_token)
     
     if username:
-        status, message, working_files = await get_user_working_files(username)
+        status, message, support_files = await get_user_support_files(username)
 
     else:
         status = 400
         message = 'Invalid user JWT token'
-        working_files = []
+        support_files = []
 
-    return {'status': status, 'message': message, 'working_files': working_files}
+    return {'status': status, 'message': message, 'support_files': support_files}
 
 
 @router.post('/get_output_files')

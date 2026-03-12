@@ -1,14 +1,32 @@
-from.tools_functions_router import get_tool_description_function
+from .tools_functions_router import get_tool_description_function
 
 
 tools_dict = {
     'create_exercise_sheet': 'main',
     'create_lesson_plan': 'main',
+    'general_conversation': 'main',
     'how_to_make_good_lesson_plan': 'support',
     'how_to_make_good_exercise_sheet': 'support',
+    'search_teacher_resources': 'support',
+    'get_previous_output_for_changes': 'support',
+    'get_previous_output_for_reference': 'support',
     'get_class_context': 'support',
     'check_lesson_plan_quality': 'quality',
-    'check_exercise_sheet_quality': 'quality'
+    'check_exercise_sheet_quality': 'quality',
+    'check_general_conversation_quality': 'quality'
+}
+
+
+main_tool_create_resouce_dict= {
+    'create_exercise_sheet': True,
+    'create_lesson_plan': True,
+    'general_conversation': False,
+}
+
+
+linked_outputs = {
+    'exercise_sheet.docx': ['teacher_version_exercise_sheet.docx'],
+    'teacher_version_exercise_sheet.docx': ['exercise_sheet.docx']
 }
 
 
