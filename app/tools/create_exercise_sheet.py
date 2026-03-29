@@ -81,7 +81,7 @@ async def run_tool(username, task_information, support_tool_responses_text):
     if support_tool_responses_text:
         prompt += f'\nHere is supporting information:\n{support_tool_responses_text}'
 
-    response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
+    response_dict = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.7)
 
     genai_response = response_dict['response']
 
@@ -105,7 +105,6 @@ async def rerun_tool(username: str, task_information: str, support_tool_response
     ||
 
     Section 2: The Teacher Support Guide
-    - 1 sentence saying that an exercise sheet file and teacher support file was created
     - Include a full Answer Key.
     - Provide reasoning for the decisions made.
     - Include any additional tips or context.
@@ -140,7 +139,7 @@ async def rerun_tool(username: str, task_information: str, support_tool_response
     Do not give any information about the improvements you made or why you made them, just the new exercise sheet output.
     '''
 
-    response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
+    response_dict = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.7)
 
     genai_response = response_dict['response']
 

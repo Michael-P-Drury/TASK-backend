@@ -19,7 +19,7 @@ postgres_engine = create_engine(DATABASE_URL)
 
 Base = declarative_base()
 
-# user database structure to be used for SQLAlchemy throughout code
+# user table structure to be used for SQLAlchemy throughout code
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
@@ -31,6 +31,7 @@ class User(Base):
     full_chat_history = Column(String, nullable=True)
 
 
+# table in postgreSQL for referencing outputs
 class ReferenceOutputs(Base):
     __tablename__ = 'reference_outputs'
     id = Column(Integer, primary_key = True)
