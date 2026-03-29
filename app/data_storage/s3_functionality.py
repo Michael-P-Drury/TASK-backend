@@ -83,7 +83,7 @@ async def download_user_output_file(username: str, filename: str):
             return 200, f'File {filename} downloaded', file_content
     
     except Exception as e:
-        return 400, 'Failed to upload user image', None
+        return 400, None
 
 
 

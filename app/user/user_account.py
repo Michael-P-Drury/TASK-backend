@@ -220,6 +220,7 @@ def create_jwt_access_token(data: str):
 
     creating jwt access token for user auth
     '''
+    
     to_encode = data.copy()
 
     secret_key = os.getenv('JWT_SECRET_KEY')
@@ -345,6 +346,7 @@ async def get_user_chat_history(username: str, full_history: bool):
 
     returning a users chat history
     '''
+
     try:
         with Session(postgres_engine) as session:
             user = session.query(User).filter(User.username == username).first()
@@ -367,20 +369,25 @@ async def seperate_chat_history(chat_history: str):
     chat_history: str - chat history to turn into a list
     '''
 
-    chat_history_list = chat_history.split('|-SPLIT-|')
+    if chat_history:
 
-    return_list = []
+        chat_history_list = chat_history.split('|-SPLIT-|')
 
-    for chat in chat_history_list:
-        sender = 'task'
-        check_chat = re.sub(r'[^a-zA-Z0-9]', '', chat)
-        if check_chat.lower().strip().startswith('user'):
-            sender = 'user'
+        return_list = []
 
-        return_list.append({'sender': sender, 'message': chat})
+        for chat in chat_history_list:
+            sender = 'task'
+            check_chat = re.sub(r'[^a-zA-Z0-9]', '', chat)
+            if check_chat.lower().strip().startswith('user'):
+                sender = 'user'
 
-    return return_list
-            
+            return_list.append({'sender': sender, 'message': chat})
+
+        return return_list
+    
+    else:
+        return []
+
     
 
 async def set_chat_history(username: str, chat_history: str, full_history: bool):

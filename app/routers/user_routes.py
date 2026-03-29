@@ -129,7 +129,7 @@ async def upload_support_file( jwt_token: str = Form(...), file: UploadFile = Fi
 
 
 @router.post('/delete_support_file')
-async def upload_support_file( data: DeleteUserFileSchema ):
+async def delete_support_file( data: DeleteUserFileSchema ):
     
     filename = data.filename
     jwt_token = data.jwt_token
@@ -147,7 +147,7 @@ async def upload_support_file( data: DeleteUserFileSchema ):
 
 
 @router.post('/delete_output_file')
-async def upload_output_file( data: DeleteUserFileSchema ):
+async def delete_output_file( data: DeleteUserFileSchema ):
     
     filename = data.filename
     jwt_token = data.jwt_token
@@ -173,7 +173,7 @@ async def download_output_file( data: DeleteUserFileSchema ):
     username = await get_username_from_jwt_token(jwt_token)
     
     if username:
-        status, message, file_content = await download_user_output_file(username, filename)
+        status, file_content = await download_user_output_file(username, filename)
 
         if status == 200:
 
@@ -183,12 +183,7 @@ async def download_output_file( data: DeleteUserFileSchema ):
                 headers={"Content-Disposition": f"attachment; filename={filename}"}
             )
 
-    else:
-        status = 400
-        message = 'Invalid user JWT token'
-        file_content = None
-
-    return {'status': status, 'message': message}
+    return None
 
 
 @router.post('/get_support_files')

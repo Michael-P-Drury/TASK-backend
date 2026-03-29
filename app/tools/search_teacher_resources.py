@@ -8,7 +8,7 @@ async def get_tool_description():
     Returns tool description
     '''
     
-    tool_description = "searches teacher uploaded resources for helpful context, good to run when creating any class resources"
+    tool_description = "searches resources for helpful context uploaded from the teacher, very important to run when creating any class resources or need to get context"
 
     return tool_description
 

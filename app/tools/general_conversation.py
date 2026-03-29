@@ -47,7 +47,7 @@ async def run_tool(username: str, task_information: str, support_tool_responses_
     if support_tool_responses_text:
         prompt += f'\nHere is supporting information:\n{support_tool_responses_text}'
 
-    response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
+    response_dict = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.7)
 
     genai_response = response_dict['response']
 
@@ -92,7 +92,7 @@ async def rerun_tool(username: str, task_information: str, support_tool_response
     Do not give any information about the improvements you made or why you made them, just the new lesson plan output.
     '''
 
-    response_dict = await invoke_genai(prompt, 'cerebras', 'gpt-oss-120b', 0.7)
+    response_dict = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.7)
 
     genai_response = response_dict['response']
 

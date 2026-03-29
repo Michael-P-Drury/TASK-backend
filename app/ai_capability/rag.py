@@ -9,6 +9,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 async def postgress_store_support_file(username: str, filename: str, file_content: bytes):
+    '''
+    inputs:
+    username: str - users username
+    filename: str - filename for file to store
+    file_content: bytes - raw bytes for the file to store
+    '''
 
     try:
         # get text from the bytes of the file
@@ -50,6 +56,14 @@ async def postgress_store_support_file(username: str, filename: str, file_conten
         
 
 async def postgress_delete_support_file(username: str, filename: str):
+    '''
+    inputs:
+    username: str - users username
+    filename: str - filename for file to be deleted
+
+
+    postgress deletion of a support file for RAG
+    '''
 
     try:
     
@@ -67,6 +81,14 @@ async def postgress_delete_support_file(username: str, filename: str):
  
 
 async def perform_rag(username: str, prompt: str, return_ammount: int):
+    '''
+    inputs:
+    username: str - users username
+    prompt: str - prompt for RAG
+    return_ammount: int - the top K number of doccuments to be returned
+
+    performs rag over user support submitted doccuments.
+    '''
         
     try:
         client = ollama.AsyncClient()
