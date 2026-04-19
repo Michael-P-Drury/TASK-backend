@@ -1,0 +1,11 @@
+cerebrus:
+
+response_dict = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.7)
+
+
+
+
+openrouter:
+
+
+response_dict = await invoke_genai(prompt, 'openrouter', 'qwen/qwen3-235b-a22b-2507', 0.7)

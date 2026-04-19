@@ -167,7 +167,7 @@ async def enough_info_decision(main_tool_id: str, chat_history: str):
     '''
 
     # run genai prompt and get response and tim taken ffrom invoke_genai function
-    tool_decision_response = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.05)
+    tool_decision_response = await invoke_genai(prompt, 'openrouter', 'qwen/qwen3-235b-a22b-2507', 0.05)
 
     text_response = tool_decision_response['response']
     time_taken = tool_decision_response['time_taken']
@@ -242,7 +242,7 @@ async def make_tool_decision(chat_history: str, username: str):
     '''
 
     # get entire genai response and return
-    tool_decision_response = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.05)
+    tool_decision_response = await invoke_genai(prompt, 'openrouter', 'qwen/qwen3-235b-a22b-2507', 0.05)
 
     return tool_decision_response
 
