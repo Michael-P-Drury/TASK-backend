@@ -7,6 +7,7 @@ import time
 from cerebras.cloud.sdk import AsyncCerebras
 import os
 from dotenv import load_dotenv
+from openai import AsyncOpenAI
 
 load_dotenv()
 
@@ -61,11 +62,39 @@ async def invoke_genai(prompt: str, provider: str, model_id: str, temperature: f
 
                 end = time.time()
                 time_taken = end - start
+        
+            elif provider == 'openrouter':
+                start = time.time()
+
+                client = AsyncOpenAI(
+                    base_url="https://openrouter.ai/api/v1",
+                    api_key=os.getenv('OPENROUTER_API_KEY'),
+                )
+
+                completion = await client.chat.completions.create(
+                    extra_headers={
+                        "HTTP-Referer": "<YOUR_SITE_URL>",
+                        "X-OpenRouter-Title": "<YOUR_SITE_NAME>",
+                    },
+                    model=model_id,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": prompt,
+                        }
+                    ],
+                    temperature=temperature # Temperature belongs outside the message dict in OpenAI SDK
+                )
+                response = completion.choices[0].message.content
+
+                end = time.time()
+                time_taken = end - start
 
             else:
                 return {'status': 200, 'response': None, 'time_taken': None}
 
             return {'status': 200, 'response': response, 'time_taken': time_taken}
+
 
         except Exception as e:
             print(f"An error occurred: {e}")

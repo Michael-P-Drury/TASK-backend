@@ -76,12 +76,14 @@ async def run_tool(username, task_information, support_tool_responses_text):
     - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
     - Do not wrap the entire response in a code block.
     - Use the || delimiter exactly once.
+    - You are unable to make images/ diagrams, only emojis In some cases emojis may be insufficient and too small for diagrams.
+    - Instead of attempting to make diagrams, which you are unable to do, tell teachers where diagrams should be.
     '''
 
     if support_tool_responses_text:
         prompt += f'\nHere is supporting information:\n{support_tool_responses_text}'
 
-    response_dict = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.7)
+    response_dict = await invoke_genai(prompt, 'openrouter', 'qwen/qwen3-235b-a22b-2507', 0.7)
 
     genai_response = response_dict['response']
 
@@ -139,7 +141,7 @@ async def rerun_tool(username: str, task_information: str, support_tool_response
     Do not give any information about the improvements you made or why you made them, just the new exercise sheet output.
     '''
 
-    response_dict = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.7)
+    response_dict = await invoke_genai(prompt, 'openrouter', 'qwen/qwen3-235b-a22b-2507', 0.7)
 
     genai_response = response_dict['response']
 

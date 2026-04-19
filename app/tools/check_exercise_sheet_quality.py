@@ -41,7 +41,7 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
     TRUE
     '''
 
-    response_dict = await invoke_genai(prompt, 'cerebras', 'qwen-3-235b-a22b-instruct-2507', 0.2)
+    response_dict = await invoke_genai(prompt, 'openrouter', 'qwen/qwen3-235b-a22b-2507', 0.7)
 
     response = response_dict['response']
 

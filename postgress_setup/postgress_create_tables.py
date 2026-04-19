@@ -8,7 +8,9 @@ load_dotenv()
 
 Base = declarative_base()
 
-engine = create_engine(os.getenv( 'POSTGRESQL_URL' ))
+postgres_url = os.getenv( 'POSTGRESQL_URL' )
+
+engine = create_engine(postgres_url)
 
 with engine.connect() as conn:
     conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))

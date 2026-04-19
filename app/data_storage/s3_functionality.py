@@ -80,7 +80,7 @@ async def download_user_output_file(username: str, filename: str):
             
             file_content = await response['Body'].read()
 
-            return 200, f'File {filename} downloaded', file_content
+            return 200, file_content
     
     except Exception as e:
         return 400, None
