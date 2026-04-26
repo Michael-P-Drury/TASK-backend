@@ -1,21 +1,35 @@
 ## TASK-backend
 
-T - Teacher
+T - Teaching
 A - Assistant
 S - Side
 K - Kick
 
-# to run
+# to setup
+
+create and enter venv
 
 install dependancies using command:
 
 pip install -r requirements.txt
 
-run postgreSQL server or have postgreSQL server to connect to for user account storage
+run postgreSQL server with vector storage or have postgreSQL server
 
-To run command:
+create .env file seen below
+
+run pandoc install.py in testing code to install needed pypandoc executable
+
+run postgress_create_tables.py in postgress_setup to create postgress tables
+
+# to run
+
+enter venv
 
 uvicorn app.main:app
+
+to run with reload:
+
+uvicorn app.main:app --reload
 
 # .env file
 
