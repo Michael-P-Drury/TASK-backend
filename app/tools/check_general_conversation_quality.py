@@ -18,7 +18,7 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
     
     prompt = f'''
 
-    You are a primary school conversation tool, your one job is to determine if your previous response is acceptable quality:
+    You are a primary school conversation tool, your one job is to determine if your previous response is acceptable quality and without hallucinations/ factual errors:
 
     Here is your previous response to general conversation:
 

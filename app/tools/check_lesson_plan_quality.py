@@ -22,7 +22,7 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
     '''
     
     prompt = f'''
-    You are a primary school lesson plan quality check tool, your one job is to determine if a lesson plan created is acceptable quality:
+    You are a primary school lesson plan quality check tool, your one job is to determine if a lesson plan created is acceptable quality and without hallucinations/ factual errors:
 
     Here is a lesson plan created by GenAI:
 
@@ -35,6 +35,12 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
     The genai was given this support information to help it create its resource:
 
     {support_tool_responses}
+
+    Ensure that the created lesson plan follows the following rules:
+
+    - Formatted in clean Markdown.
+    - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
+    - Do not wrap the entire response in a code block.
 
     Your one task is to proof read the lesson plan created and check if there is anything wrong or that you think NEEDS to be improved:
 

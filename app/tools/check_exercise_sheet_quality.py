@@ -18,7 +18,7 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
     
     prompt = f'''
 
-    You are a primary school exercise sheet quality check tool, your one job is to determine if an exercise sheet created is acceptable quality:
+    You are a primary school exercise sheet quality check tool, your one job is to determine if an exercise sheet created is acceptable quality and without halucinations/ factual errors:
 
     Here is an exercise sheet created by GenAI:
 
@@ -31,6 +31,28 @@ async def run_tool(task_information: str, main_tool_response: str, support_tool_
     The genai was given this support information to help it create its resource:
 
     {support_tool_responses}
+
+    Ensure that the previous exercise sheet is in the following structure:
+
+    You must provide exactly two sections, separated by the delimiter: ||
+
+    Section 1: The Student Exercise Sheet
+    - Formatted in clean Markdown.
+    - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
+
+    ||
+
+    Section 2: The Teacher Support Guide
+    - Include a full Answer Key.
+    - Provide reasoning for the decisions made.
+    - Include any additional tips or context.
+    - Formatted in clean Markdown.
+    - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
+
+    - Formatted in clean Markdown.
+    - Do not use LaTeX or math plugins; use standard text, bolding, and Unicode symbols for math.
+    - Do not wrap the entire response in a code block.
+    - Use the || delimiter exactly once.
 
     Your one task is to proof read the exercise sheet created and check if there is anything wrong or that you think NEEDS to be improved:
 
