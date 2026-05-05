@@ -14,6 +14,9 @@ async def get_tool_description():
 
 
 async def run_tool(username, support_info):
+    '''
+    route for running tool
+    '''
     
     full_class_context = await get_class_context_and_year(username)
 
