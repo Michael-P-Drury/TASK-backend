@@ -113,6 +113,10 @@ async def update_class_context(data: UpdateClassContextSchema):
 
 @router.post('/upload_support_file')
 async def upload_support_file( jwt_token: str = Form(...), file: UploadFile = File(...)):
+    '''
+    route for user uploading support file
+    '''
+
     file_content = await file.read()
     filename = file.filename
 
@@ -130,7 +134,10 @@ async def upload_support_file( jwt_token: str = Form(...), file: UploadFile = Fi
 
 @router.post('/delete_support_file')
 async def delete_support_file( data: DeleteUserFileSchema ):
-    
+    '''
+    route for user deleting support file
+    '''
+
     filename = data.filename
     jwt_token = data.jwt_token
 
@@ -148,6 +155,9 @@ async def delete_support_file( data: DeleteUserFileSchema ):
 
 @router.post('/delete_output_file')
 async def delete_output_file( data: DeleteUserFileSchema ):
+    '''
+    route for user deleting output file
+    '''
     
     filename = data.filename
     jwt_token = data.jwt_token
@@ -166,6 +176,9 @@ async def delete_output_file( data: DeleteUserFileSchema ):
 
 @router.post('/download_output_file')
 async def download_output_file( data: DeleteUserFileSchema ):
+    '''
+    route for user deleting output file
+    '''
     
     filename = data.filename
     jwt_token = data.jwt_token
@@ -188,6 +201,10 @@ async def download_output_file( data: DeleteUserFileSchema ):
 
 @router.post('/get_support_files')
 async def get_support_files(data: UserSchema):
+    '''
+    route for retreiving user support files
+    '''
+
     jwt_token = data.jwt_token
 
     username = await get_username_from_jwt_token(jwt_token)
@@ -205,6 +222,10 @@ async def get_support_files(data: UserSchema):
 
 @router.post('/get_output_files')
 async def get_output_files(data: UserSchema):
+    '''
+    route for getting user output files
+    '''
+    
     jwt_token = data.jwt_token
 
     username = await get_username_from_jwt_token(jwt_token)

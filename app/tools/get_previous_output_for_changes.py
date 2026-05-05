@@ -15,6 +15,9 @@ async def get_tool_description():
 
 
 async def run_tool(username: str, support_info):
+    '''
+    route for running tool
+    '''
 
     main_tool = support_info['main_tool']
 

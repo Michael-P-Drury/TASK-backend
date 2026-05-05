@@ -1,3 +1,7 @@
+'''
+file for viewing all current tables in postrgress instance
+'''
+
 from sqlalchemy import inspect
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
@@ -7,10 +11,9 @@ load_dotenv()
 
 engine = create_engine(os.getenv( 'POSTGRESQL_URL' ))
 
-# Create an inspector object
 inspector = inspect(engine)
 
-# Get list of table names
+# gets all existing tagbles and prints out
 existing_tables = inspector.get_table_names()
 
 print(f'Tables in database: {existing_tables}')

@@ -77,6 +77,10 @@ async def run_tool(username: str, task_information: str, support_tool_responses_
 
 
 async def rerun_tool(username: str, task_information: str, support_tool_responses_text: str, previous_run_response: str, improvements: str):
+    '''
+    function for rerun of tool
+    '''
+    
     previous_prompt = f'''
     Your only task is to redo a task with given improvements
 

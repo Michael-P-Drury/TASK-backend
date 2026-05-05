@@ -1,3 +1,7 @@
+'''
+function for removing postgress tables (if needed)
+'''
+
 from dotenv import load_dotenv
 import os
 from sqlalchemy import create_engine, Column, String, Integer
@@ -6,11 +10,11 @@ from pgvector.sqlalchemy import Vector
 
 load_dotenv() 
 
-Base = declarative_base()
+base = declarative_base()
 
 engine = create_engine(os.getenv( 'POSTGRESQL_URL' ))
 
-class User(Base):
+class User(base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     username = Column(String, unique=True, nullable=False)
@@ -21,7 +25,7 @@ class User(Base):
     full_chat_history = Column(String, nullable=True)
 
 
-class SupportFiles(Base):
+class SupportFiles(base):
     __tablename__ = 'support_files'
     id = Column(Integer, primary_key = True)
     username = Column(String, unique = True, nullable = False)
@@ -31,7 +35,7 @@ class SupportFiles(Base):
 
 
 
-class ReferenceOutputs(Base):
+class ReferenceOutputs(base):
     __tablename__ = 'reference_outputs'
     id = Column(Integer, primary_key = True)
     username = Column(String, nullable = False)
@@ -40,4 +44,4 @@ class ReferenceOutputs(Base):
     filename = Column(String, nullable = False)
 
 
-Base.metadata.drop_all(engine)
+base.metadata.drop_all(engine)
